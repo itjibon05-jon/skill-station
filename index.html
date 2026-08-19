@@ -217,7 +217,7 @@
                 <h4>Contact</h4>
                 <div class="contact-info">
                     <strong>Helpline</strong>
-                    <span>+8801910332253</span>
+                    <span>+8801641625723</span>
                 </div>
                 <div class="contact-info" style="margin-top: 10px;">
                     <strong>Email</strong>
@@ -225,7 +225,7 @@
                 </div>
                 <div class="contact-info" style="margin-top: 10px;">
                     <strong>Location</strong>
-                    <span>Uttara, Dhaka, Bangladesh</span>
+                    <span>Satkhira, Kalaroya, Bangladesh</span>
                 </div>
             </div>
         </div>
@@ -318,26 +318,43 @@
             }
 
             contents.forEach(data => {
-                const price = data.pricing?.offerPrice || data.price || 0;
-                const buttonText = price === 0 ? 'Start Free' : 'Enroll Now';
-                const btnColor = price === 0 ? '#2563eb' : '#10b981';
+    const regularPrice = data.pricing?.regularPrice || data.regularPrice || 0;
+    const offerPrice = data.pricing?.offerPrice || data.price || 0;
+    
+    const isFree = offerPrice === 0;
+    const buttonText = isFree ? 'Start Free' : 'Enroll Now';
+    const btnColor = isFree ? '#2563eb' : '#10b981';
 
-                courseGrid.innerHTML += `
-                    <div class="card">
-                        <img src="${data.thumbnail || 'https://via.placeholder.com/300x170'}" alt="Thumbnail">
-                        <div class="card-body">
-                            <div>
-                                <h3>${data.title}</h3>
-                                <p>${data.description || 'No description provided.'}</p>
-                            </div>
-                            <div class="card-footer">
-                                <span class="price">৳ ${price}</span>
-                                <a href="checkout.html?course=${encodeURIComponent(data.title)}&price=${price}" class="btn-enroll" style="background: ${btnColor}">${buttonText}</a>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
+    // প্রাইস দেখানোর ডিজাইন লজিক (অফার থাকলে রেগুলার প্রাইস কেটে দেখাবে)
+    let priceHTML = `<span class="price">৳ ${offerPrice}</span>`;
+    
+    if (regularPrice && regularPrice > offerPrice) {
+        const discountPercent = Math.round(((regularPrice - offerPrice) / regularPrice) * 100);
+        priceHTML = `
+            <div>
+                <span class="price" style="color: #ff5722;">৳ ${offerPrice}</span>
+                <span style="text-decoration: line-through; color: #9ca3af; font-size: 14px; margin-left: 8px;">৳ ${regularPrice}</span>
+                <span style="background: #fee2e2; color: #ef4444; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${discountPercent}% OFF</span>
+            </div>
+        `;
+    }
+
+    courseGrid.innerHTML += `
+        <div class="card">
+            <img src="${data.thumbnail || 'https://via.placeholder.com/300x170'}" alt="Thumbnail">
+            <div class="card-body">
+                <div>
+                    <h3>${data.title}</h3>
+                    <p>${data.description || 'No description provided.'}</p>
+                </div>
+                <div class="card-footer">
+                    ${priceHTML}
+                    <a href="checkout.html?course=${encodeURIComponent(data.title)}&price=${offerPrice}" class="btn-enroll" style="background: ${btnColor}">${buttonText}</a>
+                </div>
+            </div>
+        </div>
+    `;
+});
         }
 
         window.filterCourses = function(type) {
