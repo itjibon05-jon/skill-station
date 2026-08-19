@@ -46,6 +46,8 @@
         .btn-approve:hover { background: #059669; }
         .btn-reject, .btn-delete { background: #ef4444; color: white; }
         .btn-reject:hover, .btn-delete:hover { background: #dc2626; }
+        .btn-edit { background: #3b82f6; color: white; }
+        .btn-edit:hover { background: #2563eb; }
 
         /* Dynamic Forms (Manage Courses) */
         .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -57,8 +59,13 @@
         .btn-primary { background: #ff5722; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 14px; }
         .btn-primary:hover { background: #e64a19; }
 
-        #pricingSection { display: none; background: #fff8f6; padding: 15px; border-radius: 8px; border: 1px dashed #ffbca8; margin-bottom: 18px; }
+        #pricingSection, #editPricingSection { display: none; background: #fff8f6; padding: 15px; border-radius: 8px; border: 1px dashed #ffbca8; margin-bottom: 18px; }
         .discount-badge { display: inline-block; background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-top: 5px; }
+
+        /* Modal Styles for Editing */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1005; align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
 
         /* Sections Toggle */
         #dashboardSection { display: block; }
@@ -271,6 +278,76 @@
 
     </main>
 
+    <!-- EDIT CONTENT MODAL -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 20px; font-size: 20px; color: #111827;">Edit Course / Book</h3>
+            <form id="editForm">
+                <input type="hidden" id="editContentId">
+                
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label>Content Type</label>
+                        <select id="editContentType" onchange="toggleEditPricing()" required>
+                            <option value="free_course">🎁 Free Course (Video)</option>
+                            <option value="premium_course">👑 Premium Course (Video)</option>
+                            <option value="free_pdf">🆓 Free PDF Book</option>
+                            <option value="premium_pdf">🔒 Premium PDF Book</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Status</label>
+                        <select id="editContentStatus" required>
+                            <option value="active">Active (Publish Now)</option>
+                            <option value="draft">Draft (Hide for now)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Title</label>
+                    <input type="text" id="editContentTitle" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Short Description</label>
+                    <textarea id="editContentDesc" rows="3" required></textarea>
+                </div>
+
+                <!-- Dynamic Edit Pricing Section -->
+                <div id="editPricingSection">
+                    <div class="input-grid">
+                        <div class="input-group" style="margin-bottom: 0;">
+                            <label>Regular Price (৳)</label>
+                            <input type="number" id="editRegularPrice" oninput="calculateEditDiscount()">
+                        </div>
+                        <div class="input-group" style="margin-bottom: 0;">
+                            <label>Offer Price (৳)</label>
+                            <input type="number" id="editOfferPrice" oninput="calculateEditDiscount()">
+                        </div>
+                    </div>
+                    <div id="editDiscountDisplay" class="discount-badge" style="display: none;">0% OFF</div>
+                </div>
+
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label>Thumbnail Image URL</label>
+                        <input type="url" id="editThumbnailUrl" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Access Link (Youtube ID or PDF Link)</label>
+                        <input type="text" id="editAccessLink" required>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="action-btn" style="background: #e5e7eb; color: #374151;" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn-primary" id="updateBtn">Update Content</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Firebase SDK Setup -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
@@ -393,7 +470,7 @@
 
         fetchOrders();
 
-        // --- Fetch & Delete Contents ---
+        // --- Fetch, Delete & Edit Contents ---
         window.fetchAllContents = async function() {
             const tbody = document.getElementById('contentsTableBody');
             try {
@@ -413,7 +490,10 @@
                             <td><div class="text-bold">${data.title}</div><div class="text-muted">${data.type}</div></td>
                             <td>৳ ${price}</td>
                             <td><span class="badge ${data.status === 'active' ? 'badge-approved' : 'badge-pending'}">${data.status}</span></td>
-                            <td><button class="action-btn btn-delete" onclick="deleteContent('${contentId}')">🗑️ Delete</button></td>
+                            <td>
+                                <button class="action-btn btn-edit" onclick="openEditModal('${contentId}')">✏️ Edit</button>
+                                <button class="action-btn btn-delete" onclick="deleteContent('${contentId}')">🗑️ Delete</button>
+                            </td>
                         </tr>
                     `;
                 });
@@ -433,6 +513,113 @@
                 }
             }
         }
+
+        // --- Open Edit Modal & Load Data ---
+        window.openEditModal = async function(contentId) {
+            try {
+                const docRef = doc(db, "contents", contentId);
+                const docSnap = await getDoc(docRef);
+                if(docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('editContentId').value = contentId;
+                    document.getElementById('editContentType').value = data.type || 'free_course';
+                    document.getElementById('editContentStatus').value = data.status || 'active';
+                    document.getElementById('editContentTitle').value = data.title || '';
+                    document.getElementById('editContentDesc').value = data.description || '';
+                    document.getElementById('editThumbnailUrl').value = data.thumbnail || '';
+                    document.getElementById('editAccessLink').value = data.accessLink || '';
+
+                    if(data.pricing) {
+                        document.getElementById('editRegularPrice').value = data.pricing.regularPrice || '';
+                        document.getElementById('editOfferPrice').value = data.pricing.offerPrice || '';
+                    }
+
+                    toggleEditPricing();
+                    calculateEditDiscount();
+                    document.getElementById('editModal').classList.add('show');
+                }
+            } catch(e) {
+                alert("Error loading content details: " + e.message);
+            }
+        }
+
+        window.closeEditModal = function() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        window.toggleEditPricing = function() {
+            const type = document.getElementById('editContentType').value;
+            const pricingSection = document.getElementById('editPricingSection');
+            const regPrice = document.getElementById('editRegularPrice');
+            const offPrice = document.getElementById('editOfferPrice');
+
+            if(type === 'premium_course' || type === 'premium_pdf') {
+                pricingSection.style.display = 'block';
+                regPrice.required = true;
+                offPrice.required = true;
+            } else {
+                pricingSection.style.display = 'none';
+                regPrice.required = false;
+                offPrice.required = false;
+            }
+        }
+
+        window.calculateEditDiscount = function() {
+            const reg = parseFloat(document.getElementById('editRegularPrice').value);
+            const offer = parseFloat(document.getElementById('editOfferPrice').value);
+            const display = document.getElementById('editDiscountDisplay');
+
+            if(reg > 0 && offer > 0 && reg > offer) {
+                const discount = Math.round(((reg - offer) / reg) * 100);
+                display.innerText = `${discount}% OFF`;
+                display.style.display = 'inline-block';
+            } else {
+                display.style.display = 'none';
+            }
+        }
+
+        // Handle Edit Form Submission
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('updateBtn');
+            btn.innerText = "Updating..."; btn.disabled = true;
+
+            const contentId = document.getElementById('editContentId').value;
+            const type = document.getElementById('editContentType').value;
+            const regPrice = parseFloat(document.getElementById('editRegularPrice').value) || 0;
+            const offerPrice = parseFloat(document.getElementById('editOfferPrice').value) || 0;
+            
+            let discountPercent = 0;
+            if(regPrice > offerPrice) {
+                discountPercent = Math.round(((regPrice - offerPrice) / regPrice) * 100);
+            }
+
+            const updatedData = {
+                type: type,
+                status: document.getElementById('editContentStatus').value,
+                title: document.getElementById('editContentTitle').value,
+                description: document.getElementById('editContentDesc').value,
+                thumbnail: document.getElementById('editThumbnailUrl').value,
+                accessLink: document.getElementById('editAccessLink').value,
+                pricing: {
+                    isFree: (type === 'free_course' || type === 'free_pdf'),
+                    regularPrice: regPrice,
+                    offerPrice: offerPrice,
+                    discount: discountPercent
+                }
+            };
+
+            try {
+                await updateDoc(doc(db, "contents", contentId), updatedData);
+                alert("Content Updated Successfully! 🎉");
+                closeEditModal();
+                fetchAllContents();
+            } catch(error) {
+                alert("Error updating content: " + error.message);
+            } finally {
+                btn.innerText = "Update Content"; btn.disabled = false;
+            }
+        });
 
         // --- Dynamic Content Upload Logic ---
         window.togglePricing = function() {
@@ -510,19 +697,17 @@
             }
         });
 
-        // --- Settings Form Logic (পূর্বের ডাটা বহাল রাখার আপডেটসহ) ---
+        // --- Settings Form Logic ---
         document.getElementById('settingsForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('saveSettingsBtn');
             btn.innerText = "Saving Settings..."; btn.disabled = true;
 
             try {
-                // প্রথমে ফায়ারবেস থেকে আগের সেটিংস ফেচ করে নেওয়া
                 const docRef = doc(db, "settings", "global");
                 const docSnap = await getDoc(docRef);
                 const oldData = docSnap.exists() ? docSnap.data() : {};
 
-                // ইনপুট থেকে নতুন মান নেওয়া (ফাঁকা রাখলে আগের মানটিই ব্যবহার হবে)
                 const newAcademyName = document.getElementById('setAcademyName').value.trim();
                 const newBkash = document.getElementById('setBkash').value.trim();
                 const newMaintenance = document.getElementById('setMaintenance').value;
@@ -544,7 +729,7 @@
 
         async function loadSettings() {
             try {
-                const snap = await getDoc(doc(db, "settings", "global"));
+                const snap = await getDoc(doc(db, "settings", "global")); 
                 if(snap.exists()) {
                     const data = snap.data();
                     document.getElementById('setAcademyName').value = data.academyName || '';
