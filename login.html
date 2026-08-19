@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKILL STATION - Account Access</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; color: #1f2937; }
+        .wrapper { display: flex; width: 900px; max-width: 100%; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.05); }
+        .brand-side { width: 45%; background: linear-gradient(135deg, #ff5722 0%, #e64a19 100%); color: white; padding: 50px 40px; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+        .brand-side h1 { font-size: 30px; font-weight: 700; margin-bottom: 15px; letter-spacing: 1px; }
+        .brand-side p { font-size: 15px; line-height: 1.6; color: #ffe0b2; }
+        .form-side { width: 55%; padding: 50px; position: relative; }
+        .form-header { margin-bottom: 30px; }
+        .form-header h2 { font-size: 26px; font-weight: 700; color: #111827; margin-bottom: 5px; }
+        .form-header p { font-size: 14px; color: #6b7280; }
+        .input-group { margin-bottom: 18px; position: relative; }
+        .input-group label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #374151; }
+        .input-group input { width: 100%; padding: 12px 40px 12px 15px; border: 1.5px solid #e5e7eb; border-radius: 8px; outline: none; font-size: 14px; background: #f9fafb; }
+        .input-group input:focus { border-color: #ff5722; background: white; box-shadow: 0 0 0 4px rgba(255, 87, 34, 0.1); }
+        .toggle-password { position: absolute; right: 15px; top: 38px; cursor: pointer; color: #9ca3af; font-size: 18px; user-select: none; }
+        .forgot-link { display: block; text-align: right; font-size: 13px; color: #ff5722; font-weight: 600; text-decoration: none; cursor: pointer; margin-top: -10px; margin-bottom: 15px; }
+        .btn { width: 100%; background: #111827; color: white; padding: 14px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn:hover { background: #ff5722; }
+        .toggle-text { text-align: center; margin-top: 25px; font-size: 14px; color: #6b7280; font-weight: 500; }
+        .toggle-text span { color: #ff5722; font-weight: 600; cursor: pointer; }
+        .alert { font-size: 13px; padding: 10px 15px; border-radius: 8px; margin-bottom: 20px; display: none; font-weight: 500; text-align: center; }
+        .alert-error { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+        .alert-success { background: #d1fae5; color: #059669; border: 1px solid #a7f3d0; }
+        #signupFormBox, #forgotFormBox { display: none; }
+        @media (max-width: 768px) { .wrapper { flex-direction: column; width: 100%; max-width: 450px; } .brand-side { width: 100%; padding: 30px 20px; } .form-side { width: 100%; padding: 30px 20px; } }
+    </style>
+</head>
+<body>
+
+    <div class="wrapper">
+        <div class="brand-side">
+            <h1>SKILL STATION</h1>
+            <p>প্রফেশনাল হওয়ার একমাত্র ঠিকানা। আপনার ক্যারিয়ার গড়ে তুলতে আজই আমাদের সাথে যুক্ত হোন।</p>
+        </div>
+
+        <div class="form-side">
+            <!-- 1. LOGIN FORM -->
+            <div id="loginFormBox">
+                <div class="form-header">
+                    <h2>Sign in to your account</h2>
+                    <p>Welcome back! Please enter your details.</p>
+                </div>
+                <div class="alert alert-error" id="loginError"></div>
+                <div class="alert alert-success" id="loginSuccess"></div>
+                
+                <form id="loginForm">
+                    <div class="input-group">
+                        <label>Email Address</label>
+                        <input type="email" id="loginEmail" placeholder="Enter your email" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="loginPassword" placeholder="••••••••" required>
+                        <span class="toggle-password" onclick="togglePasswordVisibility('loginPassword', this)">👁️</span>
+                    </div>
+                    <a class="forgot-link" onclick="showForm('forgotFormBox')">Forgot password?</a>
+                    
+                    <button type="submit" class="btn" id="loginBtn">Sign In</button>
+                </form>
+                <div class="toggle-text">Don't have an account? <span onclick="showForm('signupFormBox')">Sign up</span></div>
+            </div>
+
+            <!-- 2. SIGNUP FORM -->
+            <div id="signupFormBox">
+                <div class="form-header">
+                    <h2>Create an account</h2>
+                    <p>Start your learning journey with us.</p>
+                </div>
+                <div class="alert alert-error" id="signupError"></div>
+                
+                <form id="signupForm">
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" id="signupName" placeholder="e.g. Md Siraj" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Email Address</label>
+                        <input type="email" id="signupEmail" placeholder="Enter your email" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="signupPassword" placeholder="Create a strong password" required minlength="6">
+                        <span class="toggle-password" onclick="togglePasswordVisibility('signupPassword', this)">👁️</span>
+                    </div>
+                    <button type="submit" class="btn" id="signupBtn">Create Account</button>
+                </form>
+                <div class="toggle-text">Already have an account? <span onclick="showForm('loginFormBox')">Sign in</span></div>
+            </div>
+
+            <!-- 3. FORGOT PASSWORD FORM -->
+            <div id="forgotFormBox">
+                <div class="form-header">
+                    <h2>Reset Password</h2>
+                    <p>Enter your email and we'll send you a link to reset your password.</p>
+                </div>
+                <div class="alert alert-error" id="forgotError"></div>
+                <div class="alert alert-success" id="forgotSuccess"></div>
+                
+                <form id="forgotForm">
+                    <div class="input-group">
+                        <label>Email Address</label>
+                        <input type="email" id="forgotEmail" placeholder="Enter your registered email" required>
+                    </div>
+                    <button type="submit" class="btn" id="forgotBtn">Send Reset Link</button>
+                </form>
+                <div class="toggle-text"><span onclick="showForm('loginFormBox')">← Back to Sign in</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDUFIUJc-95gipdtcM7xgE_xprLEGnuizg",
+            authDomain: "jrj-jibon-academy.firebaseapp.com",
+            projectId: "jrj-jibon-academy",
+            storageBucket: "jrj-jibon-academy.firebasestorage.app",
+            messagingSenderId: "1019297027528",
+            appId: "1:1019297027528:web:60d9fe09c44f791693dcfd"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const ADMIN_EMAIL = "it.jibon05@gmail.com"; // আপডেট করা অ্যাডমিন ইমেল
+
+        window.togglePasswordVisibility = function(fieldId, iconElement) {
+            const passwordField = document.getElementById(fieldId);
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                iconElement.innerText = "🙈";
+            } else {
+                passwordField.type = "password";
+                iconElement.innerText = "👁️";
+            }
+        }
+
+        window.showForm = function(formId) {
+            document.getElementById('loginFormBox').style.display = 'none';
+            document.getElementById('signupFormBox').style.display = 'none';
+            document.getElementById('forgotFormBox').style.display = 'none';
+            document.querySelectorAll('.alert').forEach(el => el.style.display = 'none');
+            document.getElementById(formId).style.display = 'block';
+        }
+
+        function showAlert(id, message) {
+            const el = document.getElementById(id);
+            el.innerText = message;
+            el.style.display = 'block';
+        }
+
+        // --- SIGNUP LOGIC ---
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('signupBtn');
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value.trim().toLowerCase();
+            const password = document.getElementById('signupPassword').value;
+
+            if (email === ADMIN_EMAIL.toLowerCase()) {
+                showAlert('signupError', "This email is reserved for Admin. Please use Admin Portal.");
+                return;
+            }
+
+            btn.innerText = "Processing..."; btn.disabled = true;
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                await updateProfile(user, { displayName: name });
+                
+                await setDoc(doc(db, "users", user.uid), {
+                    name: name, email: email, role: "student", createdAt: serverTimestamp()
+                });
+
+                showAlert('loginSuccess', "Account created successfully! Please sign in.");
+                showForm('loginFormBox');
+            } catch (error) {
+                showAlert('signupError', "Error: " + error.message.replace('Firebase: ', ''));
+            } finally {
+                btn.innerText = "Create Account"; btn.disabled = false;
+            }
+        });
+
+        // --- LOGIN LOGIC ---
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+            const password = document.getElementById('loginPassword').value;
+
+            if (email === ADMIN_EMAIL.toLowerCase()) {
+                showAlert('loginError', "Admin cannot login here! Please use Admin Login portal.");
+                return;
+            }
+
+            btn.innerText = "Signing in..."; btn.disabled = true;
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                btn.innerText = "Success!";
+                setTimeout(() => { window.location.href = "dashboard.html"; }, 1000);
+            } catch (error) {
+                showAlert('loginError', "Incorrect email or password.");
+                btn.innerText = "Sign In"; btn.disabled = false;
+            }
+        });
+
+        // --- FORGOT PASSWORD LOGIC ---
+        document.getElementById('forgotForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('forgotBtn');
+            const email = document.getElementById('forgotEmail').value;
+
+            btn.innerText = "Sending Link..."; btn.disabled = true;
+            document.getElementById('forgotError').style.display = 'none';
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+                showAlert('forgotSuccess', "Reset link sent! Please check your email inbox.");
+            } catch (error) {
+                showAlert('forgotError', "Error: Could not send link. Make sure the email is registered.");
+            } finally {
+                btn.innerText = "Send Reset Link"; btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

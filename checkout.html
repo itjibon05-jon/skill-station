@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Checkout - SKILL STATION</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .checkout-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 420px; max-width: 100%; }
+        .checkout-box h2 { text-align: center; color: #222; margin-bottom: 5px; font-size: 22px; }
+        
+        .price-container { text-align: center; margin-bottom: 20px; }
+        .offer-price { color: #ff5722; font-size: 28px; font-weight: bold; }
+        
+        .instruction { background: #fff3e0; padding: 15px; border-radius: 5px; font-size: 14px; margin-bottom: 20px; color: #d84315; border-left: 4px solid #ff5722; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; }
+        .input-group input, .input-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; outline: none; box-sizing: border-box; }
+        
+        /* বাংলা QR কোড বক্স স্টাইল */
+        #qrCodeBox { display: none; text-align: center; background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px dashed #d1d5db; margin-bottom: 15px; }
+        #qrCodeBox img { width: 160px; height: 160px; object-fit: contain; border-radius: 6px; border: 1px solid #e5e7eb; margin-top: 8px; }
+
+        .btn { width: 100%; background: #ff5722; color: white; padding: 12px; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn:hover { background: #e64a19; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .back-link { display: block; text-align: center; margin-top: 15px; color: #6b7280; text-decoration: none; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+    <div class="checkout-box">
+        <h2 id="displayCourseName">Loading Course...</h2>
+        
+        <div class="price-container">
+            <span class="offer-price" id="displayCoursePrice">৳0 BDT</span>
+        </div>
+
+        <div class="instruction">
+            <strong>পেমেন্ট নিয়ম:</strong><br>
+            নিচের নাম্বারে নির্ধারিত টাকা Send Money করুন অথবা বাংলা QR স্ক্যান করুন।<br>
+            📞 বিকাশ/নগদ/রকেট: <strong>01641625723</strong> (Personal)
+        </div>
+
+        <form id="checkoutForm">
+            <div class="input-group">
+                <label>আপনার নাম</label>
+                <input type="text" id="userName" placeholder="e.g. Md Siraj" required>
+            </div>
+            <div class="input-group">
+                <label>আপনার ইমেইল (যেটিতে এক্সেস পাবেন)</label>
+                <input type="email" id="userEmail" placeholder="e.g. siraj@gmail.com" required>
+            </div>
+            <div class="input-group">
+                <label>পেমেন্ট মেথড</label>
+                <select id="paymentMethod" required onchange="togglePaymentMethod()">
+                    <option value="">সিলেক্ট করুন</option>
+                    <option value="bkash">বিকাশ</option>
+                    <option value="nagad">নগদ</option>
+                    <option value="rocket">রকেট</option>
+                    <option value="bangla_qr">বাংলা QR (Scan & Pay)</option>
+                </select>
+            </div>
+
+            <!-- বাংলা QR কোড ছবি দেখানোর বক্স -->
+            <div id="qrCodeBox">
+                <span style="font-size: 13px; font-weight: 600; color: #374151;">আপনার ব্যাংকিং বা পেমেন্ট অ্যাপ দিয়ে স্ক্যান করুন:</span>
+                <div>
+                    <img src="src/bqr.png" alt="Bangla QR Code">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>যে নাম্বার থেকে টাকা পাঠিয়েছেন</label>
+                <input type="text" id="senderNumber" placeholder="e.g. 017XXXXXXX" required>
+            </div>
+            <div class="input-group">
+                <label>Transaction ID (TrxID)</label>
+                <input type="text" id="trxId" placeholder="e.g. 8G7A6X9D" required>
+            </div>
+            <button type="submit" id="submitBtn" class="btn">Submit Order</button>
+        </form>
+        <a href="index.html" class="back-link">← Back to Home</a>
+    </div>
+
+    <!-- Firebase SDK Setup & Dynamic Data Reader -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDUFIUJc-95gipdtcM7xgE_xprLEGnuizg",
+            authDomain: "jrj-jibon-academy.firebaseapp.com",
+            projectId: "jrj-jibon-academy",
+            storageBucket: "jrj-jibon-academy.firebasestorage.app",
+            messagingSenderId: "1019297027528",
+            appId: "1:1019297027528:web:60d9fe09c44f791693dcfd"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // URL থেকে কোর্স এবং প্রাইস রিড করার লজিক[cite: 2]
+        const urlParams = new URLSearchParams(window.location.search);
+        const selectedCourse = urlParams.get('course') || "Selected Course";
+        const selectedPrice = urlParams.get('price') || "0";
+
+        document.getElementById('displayCourseName').innerText = selectedCourse;
+        document.getElementById('displayCoursePrice').innerText = `৳ ${selectedPrice} BDT`;
+
+        // বাংলা QR সিলেক্ট করলে ছবি দেখানোর ফাংশন
+        window.togglePaymentMethod = function() {
+            const method = document.getElementById('paymentMethod').value;
+            const qrBox = document.getElementById('qrCodeBox');
+            if(method === 'bangla_qr') {
+                qrBox.style.display = 'block';
+            } else {
+                qrBox.style.display = 'none';
+            }
+        }
+
+        const checkoutForm = document.getElementById("checkoutForm");
+        const submitBtn = document.getElementById("submitBtn");
+
+        checkoutForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            submitBtn.innerText = "Processing...";
+            submitBtn.disabled = true;
+
+            try {
+                const orderData = {
+                    name: document.getElementById("userName").value,
+                    email: document.getElementById("userEmail").value,
+                    paymentMethod: document.getElementById("paymentMethod").value,
+                    senderNumber: document.getElementById("senderNumber").value,
+                    trxId: document.getElementById("trxId").value,
+                    courseName: selectedCourse,
+                    amount: Number(selectedPrice),
+                    status: "Pending",
+                    timestamp: serverTimestamp()
+                };
+
+                await addDoc(collection(db, "orders"), orderData);
+
+                alert("আপনার অর্ডার সফলভাবে রিসিভ হয়েছে! পেমেন্ট ভেরিফাই করে দ্রুত আপনাকে এক্সেস দেওয়া হবে।");
+                checkoutForm.reset();
+                window.location.href = "dashboard.html"; 
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                alert("দুঃখিত, কোনো সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+            } finally {
+                submitBtn.innerText = "Submit Order";
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

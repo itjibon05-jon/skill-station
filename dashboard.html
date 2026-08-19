@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - SKILL STATION</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: #f3f4f6; display: flex; height: 100vh; overflow: hidden; color: #1f2937; }
+
+        /* Loader */
+        #loader { position: fixed; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 20px; font-weight: bold; color: #ff5722; }
+
+        /* Sidebar */
+        .sidebar { width: 260px; background: #111827; color: white; display: flex; flex-direction: column; transition: 0.3s; }
+        .sidebar-header { padding: 24px; font-size: 20px; font-weight: 700; color: #ff5722; text-align: center; border-bottom: 1px solid #374151; }
+        .nav-menu { padding: 20px 0; flex: 1; }
+        .nav-link { display: block; padding: 15px 24px; color: #9ca3af; text-decoration: none; font-weight: 500; border-left: 4px solid transparent; cursor: pointer; transition: 0.2s; }
+        .nav-link:hover, .nav-link.active { background: #1f2937; color: white; border-left-color: #ff5722; }
+        .logout-btn { padding: 15px 24px; color: #ef4444; border-top: 1px solid #374151; cursor: pointer; font-weight: 500; }
+
+        /* Main Content */
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; position: relative; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h2 { font-size: 24px; font-weight: 600; }
+        
+        .user-info-top { display: flex; align-items: center; gap: 10px; }
+        .user-avatar-top { width: 40px; height: 40px; border-radius: 50%; background: #e5e7eb; object-fit: cover; border: 2px solid #ff5722; }
+
+        /* Cards & Progress */
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 700px; margin-bottom: 20px; }
+        
+        /* Profile Details */
+        .profile-overview { display: flex; gap: 20px; align-items: center; margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid #e5e7eb; }
+        .overview-avatar { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #ff5722; }
+        .progress-wrapper { margin-top: 10px; }
+        .progress-text { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 5px; }
+        .progress-bar-bg { width: 100%; height: 8px; background: #e5e7eb; border-radius: 10px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: #10b981; width: 0%; transition: width 0.8s ease-in-out; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .info-box { background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb; }
+        .info-box span { display: block; font-size: 12px; color: #6b7280; font-weight: 600; margin-bottom: 5px; text-transform: uppercase; }
+        .info-box div { font-size: 15px; font-weight: 500; color: #111827; }
+
+        /* Form Inputs */
+        .avatar-upload { display: flex; align-items: center; gap: 20px; margin-bottom: 25px; }
+        .avatar-preview { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd; }
+        .input-group { margin-bottom: 18px; }
+        .input-group label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #374151; }
+        .input-group input { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; outline: none; transition: 0.2s; }
+        .input-group input:focus { border-color: #ff5722; }
+        .btn-save { background: #ff5722; color: white; padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 10px; transition: 0.2s; }
+        .btn-save:hover { background: #e64a19; }
+        .alert { padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 15px; display: none; }
+        .alert.success { background: #d1fae5; color: #059669; }
+        .alert.error { background: #fee2e2; color: #dc2626; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 14px; border-bottom: 1px solid #e5e7eb; }
+        th { font-size: 13px; color: #6b7280; font-weight: 600; text-transform: uppercase; background: #f9fafb; }
+
+        /* Courses Section */
+        #coursesSection { display: none; max-width: 1000px; padding: 0; background: transparent; box-shadow: none; }
+        .course-tabs { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 25px; border-bottom: 1px solid #d1d5db; padding-bottom: 15px; }
+        .course-tab-btn { background: none; border: none; font-size: 14px; font-weight: 600; color: #6b7280; cursor: pointer; padding: 8px 16px; border-radius: 6px; transition: 0.2s; }
+        .course-tab-btn.active { background: #111827; color: white; }
+        .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .course-item { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; transition: transform 0.2s; }
+        .course-item:hover { transform: translateY(-5px); }
+        .course-thumbnail { width: 100%; height: 160px; object-fit: cover; background: #e5e7eb; border-bottom: 1px solid #f3f4f6; }
+        .course-info { padding: 20px; }
+        .course-info h4 { font-size: 16px; color: #111827; margin-bottom: 8px; }
+        .course-info p { font-size: 13px; color: #6b7280; margin-bottom: 15px; }
+        .btn-action { background: #10b981; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; font-size: 14px; transition: 0.2s; }
+        .btn-action:hover { background: #059669; }
+        .btn-pdf { background: #ef4444; }
+        .btn-pdf:hover { background: #dc2626; }
+
+        /* --- SMART VIDEO PLAYER SECTION --- */
+        #playerSection { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #f3f4f6; z-index: 10; padding: 20px; overflow-y: auto; }
+        .back-btn { background: #1f2937; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 20px; display: inline-flex; align-items: center; gap: 5px; }
+        .player-layout { display: flex; gap: 20px; max-width: 1200px; margin: auto; }
+        .video-container { flex: 2; background: black; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); aspect-ratio: 16/9; }
+        .video-container iframe { width: 100%; height: 100%; border: none; }
+        .playlist-container { flex: 1; background: white; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden; display: flex; flex-direction: column; max-height: 500px; }
+        .playlist-header { padding: 20px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; font-weight: 700; font-size: 16px; color: #111827; }
+        .playlist-items { overflow-y: auto; padding: 10px; }
+        .playlist-item { padding: 15px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; color: #374151; transition: 0.2s; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
+        .playlist-item:hover { background: #f3f4f6; }
+        .playlist-item.active { background: #fff1f2; color: #e11d48; font-weight: 600; border-left: 4px solid #e11d48; }
+        .play-icon { font-size: 18px; }
+
+        @media (max-width: 900px) {
+            .player-layout { flex-direction: column; }
+            .playlist-container { max-height: 350px; }
+        }
+
+        /* Initial View Settings */
+        #myProfileSection, #settingsSection, #billingSection { display: none; }
+
+        /* --- Sidebar Hide/Collapse Arrow --- */
+        .sidebar-toggle-arrow { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0; padding: 14px 24px; background: transparent; color: #9ca3af; border-top: 1px solid #374151; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; user-select: none; }
+        .sidebar-toggle-arrow:hover { background: #1f2937; color: white; }
+        .sidebar-toggle-arrow .arrow-icon { transition: transform 0.3s; font-size: 15px; }
+        .sidebar.collapsed .sidebar-toggle-arrow .arrow-icon { transform: rotate(180deg); }
+
+        .sidebar { position: relative; }
+        .sidebar.collapsed { margin-left: -260px; }
+
+        /* Floating button to bring the sidebar back once hidden */
+        .sidebar-reopen-btn { display: none; position: fixed; top: 16px; left: 16px; z-index: 1001; width: 42px; height: 42px; border-radius: 50%; background: #111827; color: #ff5722; border: none; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+        .sidebar-reopen-btn.show { display: flex; }
+
+        /* Overlay for mobile when sidebar is open */
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 998; }
+        .sidebar-overlay.show { display: block; }
+
+        /* --- Mobile Responsive Layout --- */
+        @media (max-width: 768px) {
+            body { overflow: visible; height: auto; min-height: 100vh; }
+
+            .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 240px; z-index: 999; transform: translateX(0); box-shadow: 4px 0 20px rgba(0,0,0,0.25); }
+            .sidebar.collapsed { transform: translateX(-100%); margin-left: 0; }
+
+            .main-content { width: 100%; padding: 20px 16px 30px; }
+
+            .header { flex-wrap: wrap; gap: 10px; padding-left: 46px; }
+            .header h2 { font-size: 19px; }
+
+            .card { max-width: 100%; padding: 20px; }
+            .info-grid { grid-template-columns: 1fr; }
+            .avatar-upload { flex-wrap: wrap; }
+
+            .course-grid { grid-template-columns: 1fr; }
+            .course-tabs { gap: 6px; }
+            .course-tab-btn { font-size: 12px; padding: 8px 10px; }
+
+            table { display: block; }
+            thead { display: none; }
+            tbody, tr, td { display: block; width: 100%; }
+            tr { border-bottom: 1px solid #e5e7eb; padding: 10px 0; }
+            td { border: none; padding: 6px 0; }
+            td:before { content: attr(data-label); display: block; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 2px; }
+
+            .player-layout { max-width: 100%; }
+            #playerSection { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader">Checking Security & Access...</div>
+
+   <aside class="sidebar" id="mainSidebar">
+    <div class="sidebar-header">SKILL STATION</div>
+    <nav class="nav-menu">
+        <!-- মূল ওয়েবসাইটে যাওয়ার বাটন -->
+        <a class="nav-link" href="index.html" style="color: #ff5722; font-weight: 600;">🌐 Back to Website</a>
+        
+        <a class="nav-link" id="navCourses" onclick="switchTab('courses')">📚 My Courses & Books</a>
+        <a class="nav-link active" id="navProfile" onclick="switchTab('profile')">👤 My Profile</a>
+        <a class="nav-link" id="navBilling" onclick="switchTab('billing')">💳 Billing History</a>
+        <a class="nav-link" id="navSettings" onclick="switchTab('settings')">⚙️ Profile Settings</a>
+    </nav>
+    <div class="sidebar-toggle-arrow" id="sidebarToggleArrow" onclick="toggleSidebar()">
+        <span class="arrow-icon">◀</span> <span id="sidebarToggleLabel">Hide Menu</span>
+    </div>
+    <a class="logout-btn" id="logoutBtn">🚪 Logout</a>
+</aside>
+
+<button class="sidebar-reopen-btn" id="sidebarReopenBtn" onclick="toggleSidebar()">☰</button>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <main class="main-content" id="mainContentArea">
+        <div class="header">
+            <h2 id="pageTitle">My Profile</h2>
+            <div class="user-info-top">
+                <span id="topUsername" style="font-weight: 600; font-size: 14px;">Loading...</span>
+                <img src="https://via.placeholder.com/40" id="topAvatar" class="user-avatar-top" alt="Avatar">
+            </div>
+        </div>
+
+        <!-- 1. My Profile View -->
+        <div id="myProfileSection" class="card">
+            <div class="profile-overview">
+                <img src="https://via.placeholder.com/100" id="viewAvatar" class="overview-avatar">
+                <div class="overview-details" style="flex: 1;">
+                    <h3 id="viewName">Loading...</h3>
+                    <p id="viewUsername">@username</p>
+                    <div class="progress-wrapper">
+                        <div class="progress-text"><span>Profile Completion</span><span id="progressPercent">0%</span></div>
+                        <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBar"></div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="info-grid">
+                <div class="info-box"><span>Email Address</span><div id="viewEmail">loading@email.com</div></div>
+                <div class="info-box"><span>Mobile Number</span><div id="viewMobile">Not Added</div></div>
+                <div class="info-box"><span>WhatsApp Number</span><div id="viewWhatsApp">Not Added</div></div>
+                <div class="info-box"><span>Account Role</span><div style="color: #ff5722; font-weight: 600;">Student</div></div>
+            </div>
+            <div style="margin-top: 25px; text-align: right;">
+                <button onclick="switchTab('settings')" style="background: #1f2937; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">Edit Information</button>
+            </div>
+        </div>
+
+        <!-- 2. Profile Settings -->
+        <div id="settingsSection" class="card">
+            <div class="alert" id="profileAlert"></div>
+            <div class="avatar-upload">
+                <img src="https://via.placeholder.com/80" id="settingsAvatar" class="avatar-preview">
+                <div>
+                    <label style="font-size: 13px; font-weight: 600; margin-bottom: 5px; display:block;">Profile Picture</label>
+                    <input type="file" id="avatarInput" accept="image/png, image/jpeg" style="font-size: 12px;">
+                </div>
+            </div>
+            <form id="profileForm">
+                <div class="info-grid" style="margin-bottom: 18px;">
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label>Full Name</label><input type="text" id="nameInput" placeholder="Your Full Name" required>
+                    </div>
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label>Unique Username</label><input type="text" id="usernameInput" placeholder="e.g. siraj_25" required>
+                    </div>
+                </div>
+                <div class="info-grid" style="margin-bottom: 18px;">
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label>Mobile Number</label><input type="tel" id="mobileInput" placeholder="e.g. 017XXXXXXX">
+                    </div>
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label>WhatsApp Number</label><input type="tel" id="whatsappInput" placeholder="e.g. 017XXXXXXX">
+                    </div>
+                </div>
+                <button type="submit" class="btn-save" id="saveProfileBtn">Save Changes</button>
+            </form>
+        </div>
+
+        <!-- 3. Billing History -->
+        <div id="billingSection" class="card" style="max-width: 900px; padding: 0;">
+            <div style="padding: 25px 30px; border-bottom: 1px solid #e5e7eb;">
+                <h3 style="color: #111827; font-size: 18px;">Transaction History</h3>
+            </div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead><tr><th>Course/Book Name</th><th>Amount</th><th>TrxID & Method</th><th>Status</th></tr></thead>
+                    <tbody id="billingTableBody">
+                        <tr><td colspan="4" style="text-align: center; padding: 30px; color: #6b7280;">Loading history...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 4. Courses & Books Section -->
+        <div id="coursesSection">
+            <div class="course-tabs">
+                <button class="course-tab-btn active" id="btn-premium" onclick="showCourseCategory('premium')">👑 Premium Courses</button>
+                <button class="course-tab-btn" id="btn-free" onclick="showCourseCategory('free')">🎁 Free Courses</button>
+                <button class="course-tab-btn" id="btn-pdf-free" onclick="showCourseCategory('pdf-free')">🆓 Free Books (PDF)</button>
+                <button class="course-tab-btn" id="btn-pdf-paid" onclick="showCourseCategory('pdf-paid')">🔒 Premium Books (PDF)</button>
+            </div>
+
+            <!-- Premium Courses Area -->
+            <div id="cat-premium" class="course-grid">
+                <div class="course-item" style="border: 1px dashed #d1d5db; box-shadow: none; text-align: center; padding: 40px 20px; grid-column: 1 / -1;">
+                    <h4 style="color: #6b7280; font-size: 15px;">Your unlocked Premium Courses will appear here.</h4>
+                </div>
+            </div>
+
+            <!-- Free Courses Area -->
+            <div id="cat-free" class="course-grid" style="display: none;">
+                <div class="course-item">
+                    <img src="https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=500&q=80" class="course-thumbnail">
+                    <div class="course-info">
+                        <h4>Digital Marketing Foundations</h4>
+                        <p>Learn the basics of SEO, Social Media, and online branding.</p>
+                        <button class="btn-action" onclick="openPlayer('free_course_1')">▶ Start Learning (Free)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Free PDF Books Area -->
+            <div id="cat-pdf-free" class="course-grid" style="display: none;">
+                <div class="course-item">
+                    <img src="https://images.unsplash.com/photo-1456953180671-730de08edaa7?w=500&q=80" class="course-thumbnail">
+                    <div class="course-info">
+                        <h4>Success Blueprint (Free Sample)</h4>
+                        <p>A quick overview guide to scaling your online career.</p>
+                        <button class="btn-action btn-pdf" onclick="window.open('https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', '_blank')">📥 Download Free PDF</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Premium PDF Books Area -->
+            <div id="cat-pdf-paid" class="course-grid" style="display: none;">
+                <div class="course-item" style="border: 1px dashed #d1d5db; box-shadow: none; text-align: center; padding: 40px 20px; grid-column: 1 / -1;">
+                    <h4 style="color: #6b7280; font-size: 15px;">🔒 Your unlocked Premium PDF Books will appear here.</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- --- 5. SMART PLAYER SECTION (OVERLAY) --- -->
+        <div id="playerSection">
+            <button class="back-btn" onclick="closePlayer()">← Back to Dashboard</button>
+            <div class="player-layout">
+                <div class="video-container">
+                    <iframe id="videoIframe" src="" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+                </div>
+                <div class="playlist-container">
+                    <div class="playlist-header" id="courseTitleHeader">Course Modules</div>
+                    <div class="playlist-items" id="playlistItems">
+                        <!-- জাভাস্ক্রিপ্ট দিয়ে এখানে ভিডিও লিস্ট আসবে -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDUFIUJc-95gipdtcM7xgE_xprLEGnuizg",
+            authDomain: "jrj-jibon-academy.firebaseapp.com",
+            projectId: "jrj-jibon-academy",
+            storageBucket: "jrj-jibon-academy.firebasestorage.app",
+            messagingSenderId: "1019297027528",
+            appId: "1:1019297027528:web:60d9fe09c44f791693dcfd"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        let currentUser = null; let userDataFromDB = null;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                await fetchUserData(user.uid);
+                await fetchBillingHistory(user.email);
+                document.getElementById('loader').style.display = 'none';
+                switchTab('profile'); 
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        // --- Video Player Logic ---
+        const courseDatabase = {
+            'free_course_1': {
+                title: 'Digital Marketing Foundations',
+                videos: [
+                    { title: 'Module 1: Introduction to Marketing', youtubeId: 'jNQXAC9IVRw' },
+                    { title: 'Module 2: Social Media Algorithms', youtubeId: 'dQw4w9WgXcQ' },
+                    { title: 'Module 3: Creating a Sales Funnel', youtubeId: 'tPEE9ZwTmy0' }
+                ]
+            }
+        };
+
+        window.openPlayer = function(courseId) {
+            const course = courseDatabase[courseId];
+            if(!course) return alert("Course content not found!");
+            document.querySelector('.header').style.display = 'none';
+            document.getElementById('coursesSection').style.display = 'none';
+            document.getElementById('mainSidebar').style.display = 'none'; 
+            document.getElementById('playerSection').style.display = 'block';
+            document.getElementById('courseTitleHeader').innerText = course.title;
+            
+            const playlistDiv = document.getElementById('playlistItems');
+            playlistDiv.innerHTML = ''; 
+
+            course.videos.forEach((vid, index) => {
+                const item = document.createElement('div');
+                item.className = `playlist-item ${index === 0 ? 'active' : ''}`;
+                item.innerHTML = `<span class="play-icon">▶</span> ${vid.title}`;
+                item.onclick = () => {
+                    document.querySelectorAll('.playlist-item').forEach(el => el.classList.remove('active'));
+                    item.classList.add('active');
+                    document.getElementById('videoIframe').src = `https://www.youtube.com/embed/${vid.youtubeId}?autoplay=1&rel=0`;
+                };
+                playlistDiv.appendChild(item);
+            });
+
+            if(course.videos.length > 0) {
+                document.getElementById('videoIframe').src = `https://www.youtube.com/embed/${course.videos[0].youtubeId}?rel=0`;
+            }
+        }
+
+        window.closePlayer = function() {
+            document.getElementById('videoIframe').src = ""; 
+            document.getElementById('playerSection').style.display = 'none';
+            document.getElementById('mainSidebar').style.display = 'flex';
+            document.querySelector('.header').style.display = 'flex';
+            document.getElementById('coursesSection').style.display = 'block';
+        }
+
+        // --- Course Category Tab Logic ---
+        window.showCourseCategory = function(cat) {
+            ['premium', 'free', 'pdf-free', 'pdf-paid'].forEach(c => {
+                document.getElementById('cat-' + c).style.display = 'none';
+            });
+            document.querySelectorAll('.course-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('cat-' + cat).style.display = 'grid';
+            document.getElementById('btn-' + cat).classList.add('active');
+        }
+
+        function calculateCompletion(data) {
+            let fields = ['name', 'username', 'photoURL', 'mobile', 'whatsapp'];
+            let filled = 0; 
+            fields.forEach(f => { 
+                if(data[f] && typeof data[f] === 'string' && data[f].trim() !== '') filled++; 
+            });
+            return Math.round((filled / fields.length) * 100);
+        }
+
+        async function fetchUserData(uid) {
+            const docSnap = await getDoc(doc(db, "users", uid));
+            if (docSnap.exists()) {
+                userDataFromDB = docSnap.data();
+                const avatarUrl = userDataFromDB.photoURL || 'https://via.placeholder.com/100';
+                ['viewAvatar', 'topAvatar', 'settingsAvatar'].forEach(id => document.getElementById(id).src = avatarUrl);
+                document.getElementById('viewName').innerText = userDataFromDB.name || 'Set your name';
+                const displayUsername = userDataFromDB.username ? `@${userDataFromDB.username}` : '@username';
+                document.getElementById('viewUsername').innerText = displayUsername; 
+                document.getElementById('topUsername').innerText = displayUsername;
+                document.getElementById('viewEmail').innerText = currentUser.email;
+                document.getElementById('viewMobile').innerText = userDataFromDB.mobile || 'Not Added'; 
+                document.getElementById('viewWhatsApp').innerText = userDataFromDB.whatsapp || 'Not Added';
+                
+                let completion = calculateCompletion(userDataFromDB);
+                document.getElementById('progressPercent').innerText = `${completion}%`; 
+                document.getElementById('progressBar').style.width = `${completion}%`;
+                if(completion === 100) document.getElementById('progressBar').style.background = '#059669'; 
+                
+                ['nameInput', 'usernameInput', 'mobileInput', 'whatsappInput'].forEach(id => { 
+                    document.getElementById(id).value = userDataFromDB[id.replace('Input', '')] || ''; 
+                });
+            }
+        }
+
+        async function fetchBillingHistory(email) {
+            const tbody = document.getElementById('billingTableBody');
+            try {
+                const snapshot = await getDocs(query(collection(db, "orders"), where("email", "==", email)));
+                tbody.innerHTML = '';
+                if(snapshot.empty) return tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: #6b7280;">No transaction history found.</td></tr>';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    let statusColor = data.status === 'Approved' ? '#059669' : '#d97706'; let statusBg = data.status === 'Approved' ? '#d1fae5' : '#fef3c7';
+                    tbody.innerHTML += `<tr><td data-label="Course/Book" style="font-weight: 500;">${data.courseName}</td><td data-label="Amount" style="font-weight: 600;">৳${data.amount}</td><td data-label="TrxID & Method"><span style="text-transform: uppercase; font-size: 12px; color: #6b7280; display: block;">${data.paymentMethod}</span>${data.trxId}</td><td data-label="Status"><span style="background: ${statusBg}; color: ${statusColor}; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">${data.status}</span></td></tr>`;
+                });
+            } catch(e) { tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: #dc2626;">Failed to load data.</td></tr>'; }
+        }
+
+        // --- FIXED TAB SWITCHING LOGIC ---
+        window.switchTab = function(tab) {
+            document.getElementById('myProfileSection').style.display = 'none';
+            document.getElementById('settingsSection').style.display = 'none';
+            document.getElementById('coursesSection').style.display = 'none';
+            document.getElementById('billingSection').style.display = 'none';
+            
+            if (tab === 'profile') document.getElementById('myProfileSection').style.display = 'block';
+            else if (tab === 'settings') document.getElementById('settingsSection').style.display = 'block';
+            else if (tab === 'courses') document.getElementById('coursesSection').style.display = 'block';
+            else if (tab === 'billing') document.getElementById('billingSection').style.display = 'block';
+            
+            let titles = { 'profile': 'My Profile', 'settings': 'Profile Settings', 'courses': 'Learning Zone', 'billing': 'Billing History' };
+            document.getElementById('pageTitle').innerText = titles[tab];
+            
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            if (tab === 'profile') document.getElementById('navProfile').classList.add('active');
+            if (tab === 'settings') document.getElementById('navSettings').classList.add('active');
+            if (tab === 'courses') document.getElementById('navCourses').classList.add('active');
+            if (tab === 'billing') document.getElementById('navBilling').classList.add('active');
+
+            // মোবাইলে কোনো মেনুতে ক্লিক করলে সাইডবার অটো হাইড হয়ে যাবে
+            if (window.innerWidth <= 768) collapseSidebar();
+        }
+
+        // --- SIDEBAR SHOW/HIDE LOGIC ---
+        const sidebarEl = document.getElementById('mainSidebar');
+        const reopenBtn = document.getElementById('sidebarReopenBtn');
+        const overlayEl = document.getElementById('sidebarOverlay');
+        const toggleLabel = document.getElementById('sidebarToggleLabel');
+
+        function collapseSidebar() {
+            sidebarEl.classList.add('collapsed');
+            reopenBtn.classList.add('show');
+            overlayEl.classList.remove('show');
+            if (toggleLabel) toggleLabel.innerText = 'Hide Menu';
+        }
+
+        function expandSidebar() {
+            sidebarEl.classList.remove('collapsed');
+            reopenBtn.classList.remove('show');
+            if (window.innerWidth <= 768) overlayEl.classList.add('show');
+        }
+
+        window.toggleSidebar = function() {
+            if (sidebarEl.classList.contains('collapsed')) {
+                expandSidebar();
+            } else {
+                collapseSidebar();
+            }
+        }
+
+        // মোবাইলে পেজ লোড হলে ডিফল্টভাবে সাইডবার হাইড থাকবে
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.innerWidth <= 768) collapseSidebar();
+        });
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) overlayEl.classList.remove('show');
+        });
+
+        const compressImage = (file) => {
+            return new Promise((resolve) => {
+                const reader = new FileReader(); reader.readAsDataURL(file);
+                reader.onload = (e) => {
+                    const img = new Image(); img.src = e.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+                        let w = img.width, h = img.height; const MAX = 250;
+                        if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } } else { if (h > MAX) { w *= MAX / h; h = MAX; } }
+                        canvas.width = w; canvas.height = h; ctx.drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                    };
+                };
+            });
+        };
+
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('saveProfileBtn'); const alertBox = document.getElementById('profileAlert');
+            let newName = document.getElementById('nameInput').value.trim();
+            let newUsername = document.getElementById('usernameInput').value.trim().toLowerCase().replace(/\s+/g, '');
+            let newMobile = document.getElementById('mobileInput').value.trim();
+            let newWhatsapp = document.getElementById('whatsappInput').value.trim();
+            let file = document.getElementById('avatarInput').files[0];
+
+            btn.innerText = "Saving Changes..."; btn.disabled = true; alertBox.style.display = 'none';
+
+            try {
+                if(newUsername !== userDataFromDB.username) {
+                    const q = query(collection(db, "users"), where("username", "==", newUsername));
+                    if(!(await getDocs(q)).empty) throw new Error("Username already taken!");
+                }
+                let updateData = { username: newUsername, mobile: newMobile, whatsapp: newWhatsapp };
+                if (newName !== userDataFromDB.name) {
+                    if (userDataFromDB.lastNameChange) {
+                        const diffDays = Math.ceil(Math.abs(new Date() - userDataFromDB.lastNameChange.toDate()) / (1000 * 60 * 60 * 24)); 
+                        if (diffDays < 60) throw new Error(`You can change your name after ${60 - diffDays} days.`);
+                    }
+                    updateData.name = newName; updateData.lastNameChange = serverTimestamp();
+                }
+                if (file) updateData.photoURL = await compressImage(file);
+                if(updateData.name) await updateProfile(currentUser, { displayName: updateData.name });
+
+                await updateDoc(doc(db, "users", currentUser.uid), updateData);
+                await fetchUserData(currentUser.uid);
+                alertBox.className = 'alert success'; alertBox.innerText = "Profile updated successfully!"; alertBox.style.display = 'block';
+                setTimeout(() => switchTab('profile'), 1500); 
+            } catch (error) { alertBox.className = 'alert error'; alertBox.innerText = error.message; alertBox.style.display = 'block'; } 
+            finally { btn.innerText = "Save Changes"; btn.disabled = false; }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => { signOut(auth).then(() => window.location.href = "login.html"); });
+    </script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKILL STATION - Admin Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: #111827; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; color: #1f2937; }
+        .login-card { background: white; padding: 40px; border-radius: 16px; width: 400px; max-width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .login-header { text-align: center; margin-bottom: 25px; }
+        .login-header h2 { font-size: 24px; font-weight: 700; color: #111827; margin-bottom: 5px; }
+        .login-header span { color: #ff5722; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .input-group { margin-bottom: 18px; position: relative; }
+        .input-group label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #374151; }
+        .input-group input { width: 100%; padding: 12px 40px 12px 15px; border: 1.5px solid #e5e7eb; border-radius: 8px; outline: none; font-size: 14px; background: #f9fafb; }
+        .input-group input:focus { border-color: #ff5722; background: white; box-shadow: 0 0 0 4px rgba(255, 87, 34, 0.1); }
+        .toggle-password { position: absolute; right: 15px; top: 38px; cursor: pointer; color: #9ca3af; font-size: 18px; user-select: none; }
+        .btn { width: 100%; background: #ff5722; color: white; padding: 14px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn:hover { background: #e64a19; }
+        .alert { font-size: 13px; padding: 10px 15px; border-radius: 8px; margin-bottom: 20px; display: none; font-weight: 500; text-align: center; background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+        .back-link { display: block; text-align: center; margin-top: 20px; color: #6b7280; text-decoration: none; font-size: 13px; }
+        .back-link:hover { color: #ff5722; }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="login-header">
+            <span>Admin Portal</span>
+            <h2>SKILL STATION</h2>
+        </div>
+
+        <div class="alert" id="adminError"></div>
+
+        <form id="adminLoginForm">
+            <div class="input-group">
+                <label>Admin Email</label>
+                <input type="email" id="adminEmail" placeholder="it.jibon05@gmail.com" required>
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="adminPassword" placeholder="••••••••" required>
+                <span class="toggle-password" onclick="togglePasswordVisibility('adminPassword', this)">👁️</span>
+            </div>
+            <button type="submit" class="btn" id="adminLoginBtn">Admin Login</button>
+        </form>
+        
+        <a href="index.html" class="back-link">← Back to Website</a>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDUFIUJc-95gipdtcM7xgE_xprLEGnuizg",
+            authDomain: "jrj-jibon-academy.firebaseapp.com",
+            projectId: "jrj-jibon-academy",
+            storageBucket: "jrj-jibon-academy.firebasestorage.app",
+            messagingSenderId: "1019297027528",
+            appId: "1:1019297027528:web:60d9fe09c44f791693dcfd"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        window.togglePasswordVisibility = function(fieldId, iconElement) {
+            const passwordField = document.getElementById(fieldId);
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                iconElement.innerText = "🙈";
+            } else {
+                passwordField.type = "password";
+                iconElement.innerText = "👁️";
+            }
+        }
+
+        function showError(message) {
+            const el = document.getElementById('adminError');
+            el.innerText = message;
+            el.style.display = 'block';
+        }
+
+        // আপনার নির্দিষ্ট অ্যাডমিন ইমেল এখানে সেট করা হলো
+        const ADMIN_EMAIL = "it.jibon05@gmail.com";
+
+        document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('adminLoginBtn');
+            const email = document.getElementById('adminEmail').value.trim().toLowerCase();
+            const password = document.getElementById('adminPassword').value;
+
+            document.getElementById('adminError').style.display = 'none';
+            btn.innerText = "Verifying...";
+            btn.disabled = true;
+
+            try {
+                if (email !== ADMIN_EMAIL.toLowerCase()) {
+                    throw new Error("Access Denied! You are not authorized as an admin.");
+                }
+
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                
+                if (userCredential.user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+                    await signOut(auth);
+                    throw new Error("Security Alert: Unauthorized Admin Access!");
+                }
+
+                btn.innerText = "Welcome Admin!";
+                setTimeout(() => {
+                    window.location.href = "admin.html";
+                }, 1000);
+
+            } catch (error) {
+                showError(error.message.includes("Access Denied") || error.message.includes("Security Alert") ? error.message : "Invalid Admin Email or Password!");
+                btn.innerText = "Admin Login";
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

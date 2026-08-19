@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKILL STATION - Admin Dashboard</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: #f3f4f6; display: flex; height: 100vh; overflow: hidden; color: #1f2937; }
+
+        /* Sidebar */
+        .sidebar { width: 260px; background: #111827; color: white; display: flex; flex-direction: column; transition: 0.3s; }
+        .sidebar-header { padding: 24px; border-bottom: 1px solid #374151; font-size: 20px; font-weight: 700; color: #ff5722; text-align: center; letter-spacing: 0.5px; }
+        .nav-menu { padding: 20px 0; flex: 1; }
+        .nav-link { display: block; padding: 15px 24px; color: #9ca3af; text-decoration: none; font-weight: 500; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
+        .nav-link:hover, .nav-link.active { background: #1f2937; color: white; border-left-color: #ff5722; }
+        .logout-btn { padding: 15px 24px; color: #ef4444; font-weight: 500; border-top: 1px solid #374151; display: block; cursor: pointer; }
+
+        /* Main Content */
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+        .header-title { font-size: 24px; font-weight: 600; margin-bottom: 24px; color: #111827; }
+
+        /* Analytics Cards */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; }
+        .stat-title { font-size: 14px; color: #6b7280; font-weight: 500; text-transform: uppercase; }
+        .stat-value { font-size: 28px; font-weight: 700; color: #111827; margin-top: 10px; }
+
+        /* General Card & Table */
+        .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; margin-bottom: 20px; }
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 16px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+        th { color: #6b7280; font-weight: 600; text-transform: uppercase; font-size: 12px; background: #f9fafb; }
+        .text-bold { font-weight: 600; color: #111827; }
+        .text-muted { color: #6b7280; font-size: 12px; }
+        
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-pending { background: #fef3c7; color: #d97706; }
+        .badge-approved { background: #d1fae5; color: #059669; }
+
+        .action-btn { padding: 8px 14px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; margin-right: 5px; }
+        .btn-approve { background: #10b981; color: white; }
+        .btn-approve:hover { background: #059669; }
+        .btn-reject, .btn-delete { background: #ef4444; color: white; }
+        .btn-reject:hover, .btn-delete:hover { background: #dc2626; }
+
+        /* Dynamic Forms (Manage Courses) */
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .input-group { margin-bottom: 18px; }
+        .input-group label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #374151; }
+        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; outline: none; transition: 0.2s; }
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: #ff5722; box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.1); }
+        
+        .btn-primary { background: #ff5722; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 14px; }
+        .btn-primary:hover { background: #e64a19; }
+
+        #pricingSection { display: none; background: #fff8f6; padding: 15px; border-radius: 8px; border: 1px dashed #ffbca8; margin-bottom: 18px; }
+        .discount-badge { display: inline-block; background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-top: 5px; }
+
+        /* Sections Toggle */
+        #dashboardSection { display: block; }
+        #manageCoursesSection { display: none; }
+        #allContentsSection { display: none; }
+        #settingsSection { display: none; }
+
+        /* --- Mobile Menu Toggle --- */
+        .mobile-menu-btn { display: none; position: fixed; top: 16px; left: 16px; z-index: 1001; width: 42px; height: 42px; border-radius: 50%; background: #111827; color: #ff5722; border: none; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 998; }
+        .sidebar-overlay.show { display: block; }
+
+        @media (max-width: 768px) {
+            body { overflow: visible; height: auto; min-height: 100vh; }
+            .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 240px; z-index: 999; transform: translateX(-100%); box-shadow: 4px 0 20px rgba(0,0,0,0.25); }
+            .sidebar.open { transform: translateX(0); }
+            .mobile-menu-btn { display: flex; }
+            .main-content { width: 100%; padding: 70px 16px 30px; }
+            .input-grid { grid-template-columns: 1fr; }
+            table { display: block; overflow-x: auto; white-space: nowrap; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="adminSidebar">
+        <div class="sidebar-header">
+            SKILL STATION <span style="font-size: 11px; display: block; color: #9ca3af; font-weight: normal;">Admin Panel</span>
+        </div>
+        <nav class="nav-menu">
+            <a class="nav-link active" id="navDashboard" onclick="switchTab('dashboard')">📊 Dashboard</a>
+            <a class="nav-link" id="navCourses" onclick="switchTab('courses')">📚 Add New Course</a>
+            <a class="nav-link" id="navAllCourses" onclick="switchTab('allCourses')">📋 Manage / Delete Courses</a>
+            <a class="nav-link" id="navSettings" onclick="switchTab('settings')">⚙️ Settings</a>
+        </nav>
+        <a class="logout-btn" href="login.html">🚪 Logout</a>
+    </aside>
+
+    <button class="mobile-menu-btn" id="adminMenuBtn" onclick="toggleAdminSidebar()">☰</button>
+    <div class="sidebar-overlay" id="adminSidebarOverlay" onclick="toggleAdminSidebar()"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        
+        <!-- 1. DASHBOARD SECTION (Orders & Stats) -->
+        <div id="dashboardSection">
+            <h2 class="header-title">Overview</h2>
+
+            <!-- Analytics Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-title">Total Orders</div>
+                    <div class="stat-value" id="statTotal">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Pending Approvals</div>
+                    <div class="stat-value" id="statPending" style="color: #d97706;">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Total Revenue (BDT)</div>
+                    <div class="stat-value" id="statRevenue" style="color: #059669;">৳ 0</div>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="card">
+                <div class="table-header">
+                    <h3 style="font-size: 18px; font-weight: 600;">Recent Transactions</h3>
+                    <button onclick="fetchOrders()" class="action-btn" style="background: #e5e7eb; color: #374151;">🔄 Refresh</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Customer Info</th>
+                            <th>Course / Product</th>
+                            <th>Payment Details</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderTableBody">
+                        <tr><td colspan="5" style="text-align: center; padding: 20px;">Loading data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 2. MANAGE COURSES SECTION (Upload Form) -->
+        <div id="manageCoursesSection">
+            <h2 class="header-title">Add New Content (Course / PDF)</h2>
+            
+            <div class="card" style="max-width: 800px;">
+                <form id="uploadForm">
+                    
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label>Content Type</label>
+                            <select id="contentType" onchange="togglePricing()" required>
+                                <option value="" disabled selected>Select an option...</option>
+                                <option value="free_course">🎁 Free Course (Video)</option>
+                                <option value="premium_course">👑 Premium Course (Video)</option>
+                                <option value="free_pdf">🆓 Free PDF Book</option>
+                                <option value="premium_pdf">🔒 Premium PDF Book</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Status</label>
+                            <select id="contentStatus" required>
+                                <option value="active">Active (Publish Now)</option>
+                                <option value="draft">Draft (Hide for now)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Title</label>
+                        <input type="text" id="contentTitle" placeholder="e.g. Advanced Digital Marketing 2026" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Short Description</label>
+                        <textarea id="contentDesc" rows="3" placeholder="Write a short summary about what students will learn..." required></textarea>
+                    </div>
+
+                    <!-- Dynamic Pricing Section -->
+                    <div id="pricingSection">
+                        <div class="input-grid">
+                            <div class="input-group" style="margin-bottom: 0;">
+                                <label>Regular Price (৳)</label>
+                                <input type="number" id="regularPrice" placeholder="e.g. 5000" oninput="calculateDiscount()">
+                            </div>
+                            <div class="input-group" style="margin-bottom: 0;">
+                                <label>Offer Price (৳)</label>
+                                <input type="number" id="offerPrice" placeholder="e.g. 2500" oninput="calculateDiscount()">
+                            </div>
+                        </div>
+                        <div id="discountDisplay" class="discount-badge" style="display: none;">0% OFF</div>
+                    </div>
+
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label>Thumbnail Image URL</label>
+                            <input type="url" id="thumbnailUrl" placeholder="https://... (Image Link)" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Access Link (Youtube ID or PDF Link)</label>
+                            <input type="text" id="accessLink" placeholder="e.g. jNQXAC9IVRw" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary" id="uploadBtn">Publish Content</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 3. MANAGE / DELETE COURSES SECTION -->
+        <div id="allContentsSection">
+            <h2 class="header-title">Manage All Uploaded Courses & Books</h2>
+            <div class="card">
+                <div class="table-header">
+                    <h3 style="font-size: 18px; font-weight: 600;">Existing Contents</h3>
+                    <button onclick="fetchAllContents()" class="action-btn" style="background: #e5e7eb; color: #374151;">🔄 Refresh List</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Thumbnail</th>
+                            <th>Title & Type</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contentsTableBody">
+                        <tr><td colspan="5" style="text-align: center; padding: 20px;">Loading contents...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 4. SETTINGS SECTION -->
+        <div id="settingsSection">
+            <h2 class="header-title">System Settings</h2>
+            
+            <div class="card" style="max-width: 600px;">
+                <form id="settingsForm">
+                    <div class="input-group">
+                        <label>Academy Name</label>
+                        <input type="text" id="setAcademyName" placeholder="SKILL STATION">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>bKash Merchant/Personal Number</label>
+                        <input type="text" id="setBkash" placeholder="e.g. 017XXXXXXXX">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Maintenance Mode (Hide website from users)</label>
+                        <select id="setMaintenance">
+                            <option value="false">Off (Live)</option>
+                            <option value="true">On (Hidden)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-primary" id="saveSettingsBtn">Save Settings</button>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Firebase SDK Setup -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, addDoc, serverTimestamp, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDUFIUJc-95gipdtcM7xgE_xprLEGnuizg",
+            authDomain: "jrj-jibon-academy.firebaseapp.com",
+            projectId: "jrj-jibon-academy",
+            storageBucket: "jrj-jibon-academy.firebasestorage.app",
+            messagingSenderId: "1019297027528",
+            appId: "1:1019297027528:web:60d9fe09c44f791693dcfd"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- Tab Switching Logic ---
+        window.switchTab = function(tab) {
+            document.getElementById('dashboardSection').style.display = tab === 'dashboard' ? 'block' : 'none';
+            document.getElementById('manageCoursesSection').style.display = tab === 'courses' ? 'block' : 'none';
+            document.getElementById('allContentsSection').style.display = tab === 'allCourses' ? 'block' : 'none';
+            document.getElementById('settingsSection').style.display = tab === 'settings' ? 'block' : 'none';
+            
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            if(tab === 'dashboard') document.getElementById('navDashboard').classList.add('active');
+            if(tab === 'courses') document.getElementById('navCourses').classList.add('active');
+            if(tab === 'allCourses') { document.getElementById('navAllCourses').classList.add('active'); fetchAllContents(); }
+            if(tab === 'settings') document.getElementById('navSettings').classList.add('active');
+
+            if (window.innerWidth <= 768) toggleAdminSidebar(false);
+        }
+
+        // --- Mobile Sidebar Toggle ---
+        window.toggleAdminSidebar = function(forceOpen) {
+            const sb = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('adminSidebarOverlay');
+            const shouldOpen = forceOpen !== undefined ? forceOpen : !sb.classList.contains('open');
+            sb.classList.toggle('open', shouldOpen);
+            overlay.classList.toggle('show', shouldOpen);
+        }
+
+        // --- Fetch Orders & Analytics ---
+        window.fetchOrders = async function() {
+            const tbody = document.getElementById('orderTableBody');
+            try {
+                const querySnapshot = await getDocs(collection(db, "orders"));
+                tbody.innerHTML = ''; 
+
+                let totalOrders = 0;
+                let pendingOrders = 0;
+                let totalRevenue = 0;
+
+                if (querySnapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">No new orders found.</td></tr>';
+                    document.getElementById('statTotal').innerText = 0;
+                    document.getElementById('statPending').innerText = 0;
+                    document.getElementById('statRevenue').innerText = '৳ 0';
+                    return;
+                }
+
+                querySnapshot.forEach((orderDoc) => {
+                    const data = orderDoc.data();
+                    const orderId = orderDoc.id;
+                    
+                    totalOrders++;
+                    if(data.status === "Pending") pendingOrders++;
+                    if(data.status === "Approved") totalRevenue += Number(data.amount || 0);
+                    
+                    const tr = document.createElement('tr');
+                    
+                    const statusBadge = data.status === "Approved" 
+                        ? `<span class="badge badge-approved">• Approved</span>` 
+                        : `<span class="badge badge-pending">• Pending</span>`;
+                        
+                    const actionBtn = data.status === "Pending" 
+                        ? `<button class="action-btn btn-approve" onclick="approveOrder('${orderId}')">Approve</button>
+                           <button class="action-btn btn-reject" onclick="deleteOrder('${orderId}')">Reject</button>` 
+                        : `<button class="action-btn" style="background:#f3f4f6; color:#9ca3af; cursor:not-allowed;" disabled>Done</button>
+                           <button class="action-btn btn-reject" onclick="deleteOrder('${orderId}')">Delete Log</button>`;
+
+                    tr.innerHTML = `
+                        <td>
+                            <div class="text-bold">${data.name}</div>
+                            <div class="text-muted">${data.email}</div>
+                        </td>
+                        <td>
+                            <div class="text-bold">${data.courseName}</div>
+                            <div class="text-muted">Price: ৳${data.amount || 'N/A'}</div>
+                        </td>
+                        <td>
+                            <div class="text-bold" style="text-transform: uppercase;">${data.paymentMethod}</div>
+                            <div class="text-muted">TrxID: ${data.trxId}</div>
+                        </td>
+                        <td>${statusBadge}</td>
+                        <td>${actionBtn}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                document.getElementById('statTotal').innerText = totalOrders;
+                document.getElementById('statPending').innerText = pendingOrders;
+                document.getElementById('statRevenue').innerText = `৳ ${totalRevenue.toLocaleString()}`;
+
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Failed to load data!</td></tr>';
+            }
+        }
+
+        window.approveOrder = async function(orderId) {
+            if(confirm("Are you sure you want to approve this order?")) {
+                await updateDoc(doc(db, "orders", orderId), { status: "Approved" }); fetchOrders();
+            }
+        }
+        window.deleteOrder = async function(orderId) {
+            if(confirm("Warning: Do you want to permanently delete/reject this order?")) {
+                await deleteDoc(doc(db, "orders", orderId)); fetchOrders();
+            }
+        }
+
+        fetchOrders();
+
+        // --- Fetch & Delete Contents ---
+        window.fetchAllContents = async function() {
+            const tbody = document.getElementById('contentsTableBody');
+            try {
+                const querySnapshot = await getDocs(collection(db, "contents"));
+                tbody.innerHTML = '';
+                if(querySnapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #6b7280;">No courses found.</td></tr>';
+                    return;
+                }
+                querySnapshot.forEach((contentDoc) => {
+                    const data = contentDoc.data();
+                    const contentId = contentDoc.id;
+                    const price = data.pricing?.offerPrice || 0;
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><img src="${data.thumbnail || 'https://via.placeholder.com/80'}" style="width: 60px; height: 40px; object-fit: cover; border-radius: 4px;"></td>
+                            <td><div class="text-bold">${data.title}</div><div class="text-muted">${data.type}</div></td>
+                            <td>৳ ${price}</td>
+                            <td><span class="badge ${data.status === 'active' ? 'badge-approved' : 'badge-pending'}">${data.status}</span></td>
+                            <td><button class="action-btn btn-delete" onclick="deleteContent('${contentId}')">🗑️ Delete</button></td>
+                        </tr>
+                    `;
+                });
+            } catch(e) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Failed to load contents.</td></tr>';
+            }
+        }
+
+        window.deleteContent = async function(contentId) {
+            if(confirm("Are you sure you want to delete this course/book permanently?")) {
+                try {
+                    await deleteDoc(doc(db, "contents", contentId));
+                    alert("Content deleted successfully!");
+                    fetchAllContents();
+                } catch(e) {
+                    alert("Failed to delete: " + e.message);
+                }
+            }
+        }
+
+        // --- Dynamic Content Upload Logic ---
+        window.togglePricing = function() {
+            const type = document.getElementById('contentType').value;
+            const pricingSection = document.getElementById('pricingSection');
+            const regPrice = document.getElementById('regularPrice');
+            const offPrice = document.getElementById('offerPrice');
+
+            if(type === 'premium_course' || type === 'premium_pdf') {
+                pricingSection.style.display = 'block';
+                regPrice.required = true;
+                offPrice.required = true;
+            } else {
+                pricingSection.style.display = 'none';
+                regPrice.required = false;
+                offPrice.required = false;
+                regPrice.value = ''; offPrice.value = '';
+                document.getElementById('discountDisplay').style.display = 'none';
+            }
+        }
+
+        window.calculateDiscount = function() {
+            const reg = parseFloat(document.getElementById('regularPrice').value);
+            const offer = parseFloat(document.getElementById('offerPrice').value);
+            const display = document.getElementById('discountDisplay');
+
+            if(reg > 0 && offer > 0 && reg > offer) {
+                const discount = Math.round(((reg - offer) / reg) * 100);
+                display.innerText = `${discount}% OFF`;
+                display.style.display = 'inline-block';
+            } else {
+                display.style.display = 'none';
+            }
+        }
+
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('uploadBtn');
+            btn.innerText = "Publishing..."; btn.disabled = true;
+
+            const type = document.getElementById('contentType').value;
+            const regPrice = parseFloat(document.getElementById('regularPrice').value) || 0;
+            const offerPrice = parseFloat(document.getElementById('offerPrice').value) || 0;
+            
+            let discountPercent = 0;
+            if(regPrice > offerPrice) {
+                discountPercent = Math.round(((regPrice - offerPrice) / regPrice) * 100);
+            }
+
+            const contentData = {
+                type: type,
+                status: document.getElementById('contentStatus').value,
+                title: document.getElementById('contentTitle').value,
+                description: document.getElementById('contentDesc').value,
+                thumbnail: document.getElementById('thumbnailUrl').value,
+                accessLink: document.getElementById('accessLink').value,
+                pricing: {
+                    isFree: (type === 'free_course' || type === 'free_pdf'),
+                    regularPrice: regPrice,
+                    offerPrice: offerPrice,
+                    discount: discountPercent
+                },
+                createdAt: serverTimestamp()
+            };
+
+            try {
+                await addDoc(collection(db, "contents"), contentData);
+                alert("Content Uploaded Successfully! 🚀");
+                document.getElementById('uploadForm').reset();
+                togglePricing(); 
+            } catch(error) {
+                alert("Error uploading content: " + error.message);
+            } finally {
+                btn.innerText = "Publish Content"; btn.disabled = false;
+            }
+        });
+
+        // --- Settings Form Logic (পূর্বের ডাটা বহাল রাখার আপডেটসহ) ---
+        document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('saveSettingsBtn');
+            btn.innerText = "Saving Settings..."; btn.disabled = true;
+
+            try {
+                // প্রথমে ফায়ারবেস থেকে আগের সেটিংস ফেচ করে নেওয়া
+                const docRef = doc(db, "settings", "global");
+                const docSnap = await getDoc(docRef);
+                const oldData = docSnap.exists() ? docSnap.data() : {};
+
+                // ইনপুট থেকে নতুন মান নেওয়া (ফাঁকা রাখলে আগের মানটিই ব্যবহার হবে)
+                const newAcademyName = document.getElementById('setAcademyName').value.trim();
+                const newBkash = document.getElementById('setBkash').value.trim();
+                const newMaintenance = document.getElementById('setMaintenance').value;
+
+                const settingsData = {
+                    academyName: newAcademyName !== "" ? newAcademyName : (oldData.academyName || "SKILL STATION"),
+                    bkash: newBkash !== "" ? newBkash : (oldData.bkash || ""),
+                    maintenance: newMaintenance !== "" ? newMaintenance : (oldData.maintenance || "false")
+                };
+
+                await setDoc(docRef, settingsData, { merge: true });
+                alert("System Settings Updated Successfully!");
+            } catch(error) {
+                alert("Error saving settings: " + error.message);
+            } finally {
+                btn.innerText = "Save Settings"; btn.disabled = false;
+            }
+        });
+
+        async function loadSettings() {
+            try {
+                const snap = await getDoc(doc(db, "settings", "global"));
+                if(snap.exists()) {
+                    const data = snap.data();
+                    document.getElementById('setAcademyName').value = data.academyName || '';
+                    document.getElementById('setBkash').value = data.bkash || '';
+                    document.getElementById('setMaintenance').value = data.maintenance || 'false';
+                }
+            } catch(e) {
+                console.log("No previous settings found yet.");
+            }
+        }
+        loadSettings();
+
+    </script>
+</body>
+</html>
