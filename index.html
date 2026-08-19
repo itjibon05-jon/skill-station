@@ -65,7 +65,7 @@
         .card-body p { font-size: 14px; color: #6b7280; margin-bottom: 15px; }
         .card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f3f4f6; padding-top: 15px; }
         .price { font-size: 20px; font-weight: 700; color: #ff5722; }
-        .btn-enroll { background: #10b981; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px; transition: 0.2s; }
+        .btn-enroll { background: #10b981; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px; transition: 0.2s; text-align: center; }
         .btn-enroll:hover { background: #059669; }
 
         /* Professional Footer Style */
@@ -138,8 +138,8 @@
 
     <!-- Hero Section with Banner.png -->
     <header class="hero">
-        <h1>সঠিক স্কিল আর গাইডলাইন হোক আপনার <span>নেক্সট-লেভেল</span> ক্যারিয়ার!</h1>
-        <p>থিওরিটিক্যাল পড়াশোনা নয় - Skill Station-এর ইন্ডাস্ট্রি-লিডিং প্রোগ্রামগুলোর সাহায্যে অর্জন করুন সেই স্কিল, যা যেকোনো মার্কেট ডোমিনেট করার জন্য যথেষ্ট।</p>
+        <h1>সঠিক স্কিল আর গাইডলাইন হোক আপনার <span>নেক্সট-লেভেল</span> ক্যারিয়ার!</h1>
+        <p>থিওরিটিক্যাল পড়াশোনা নয় - Skill Station-এর ইন্ডাস্ট্রি-লিডিং প্রোগ্রামগুলোর সাহায্যে অর্জন করুন সেই স্কিল, যা যেকোনো মার্কেট ডোমিনেট করার জন্য যথেষ্ট।</p>
         
         <div class="hero-banner">
             <img src="src/banner.png" alt="SKILL STATION Banner">
@@ -159,7 +159,7 @@
     <!-- Courses & Books Section -->
     <div class="container" id="courses">
         <h2 class="section-title">আমাদের সকল প্রোগ্রাম</h2>
-        <p class="section-subtitle">আপনার ক্যারিয়ারকে এক ধাপ এগিয়ে নিতে বেছে নিন আপনার পছন্দের কোর্স বা গাইডলাইন বুক।</p>
+        <p class="section-subtitle">আপনার ক্যারিয়ারকে এক ধাপ এগিয়ে নিতে বেছে নিন আপনার পছন্দের কোর্স বা গাইডলাইন বুক।</p>
         
         <div class="course-tabs">
             <button class="tab-btn active" onclick="filterCourses('all')">All</button>
@@ -258,19 +258,21 @@
                 title: 'Digital Marketing Foundations (Free)',
                 description: 'ডিজিটাল মার্কেটিং এর বেসিক থেকে অ্যাডভান্সড ধারণা এবং সোশ্যাল মিডিয়া গ্রোথ স্ট্র্যাটেজি।',
                 thumbnail: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=500&q=80',
-                pricing: { offerPrice: 0 }
+                pricing: { offerPrice: 0 },
+                fileUrl: 'https://drive.google.com'
             },
             {
                 type: 'free_pdf',
                 title: 'Success Blueprint E-Book (Free)',
-                description: 'অনলাইন ক্যারিয়ার শুরু করার জন্য গাইডলাইন বুক ও স্টেপ-বাই-স্টেপ গেমপ্ল্যান।',
+                description: 'অনলাইন ক্যারিয়ার শুরু করার জন্য গাইডলাইন বুক ও স্টেপ-바이-স্টেপ গেমপ্ল্যান।',
                 thumbnail: 'https://images.unsplash.com/photo-1456953180671-730de08edaa7?w=500&q=80',
-                pricing: { offerPrice: 0 }
+                pricing: { offerPrice: 0 },
+                fileUrl: 'https://drive.google.com'
             },
             {
                 type: 'premium_course',
                 title: 'Marketing Mindgame Masterclass',
-                description: 'ইকমার্স এবং ডিজিটাল বিজনেস স্কেল করার মাস্টারক্লাস ও সিক্রেট ফ্রেমওয়ার্ক।',
+                description: 'ইকমার্স এবং ডিজিটাল বিজনেস স্কেল করার মাস্টারক্লাস ও সিক্রেট ফ্রেমওয়ার্ক।',
                 thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500&q=80',
                 pricing: { offerPrice: 999 }
             },
@@ -322,6 +324,18 @@
                 const buttonText = price === 0 ? 'Start Free' : 'Enroll Now';
                 const btnColor = price === 0 ? '#2563eb' : '#10b981';
 
+                // ফ্রি হলে সরাসরি ড্রাইভ বা ফাইল লিংক, পেইড হলে চেকআউট পেজ
+                let actionLink = '';
+                let targetAttr = '';
+                
+                if (price === 0) {
+                    actionLink = data.fileUrl || data.link || '#'; 
+                    targetAttr = 'target="_blank"';
+                } else {
+                    actionLink = `checkout.html?course=${encodeURIComponent(data.title)}&price=${price}`;
+                    targetAttr = '';
+                }
+
                 courseGrid.innerHTML += `
                     <div class="card">
                         <img src="${data.thumbnail || 'https://via.placeholder.com/300x170'}" alt="Thumbnail">
@@ -332,7 +346,7 @@
                             </div>
                             <div class="card-footer">
                                 <span class="price">৳ ${price}</span>
-                                <a href="checkout.html?course=${encodeURIComponent(data.title)}&price=${price}" class="btn-enroll" style="background: ${btnColor}">${buttonText}</a>
+                                <a href="${actionLink}" ${targetAttr} class="btn-enroll" style="background: ${btnColor}">${buttonText}</a>
                             </div>
                         </div>
                     </div>
