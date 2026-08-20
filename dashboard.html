@@ -244,7 +244,7 @@
                 <button class="course-tab-btn active" id="btn-premium">👑 My Enrolled Courses & Books</button>
             </div>
 
-            <!-- শুধুমাত্র ফ্রি অথবা পারচেজকৃত/অ্যাপ্রুভড কন্টেন্টগুলো এখানে আসবে -->
+            <!-- ড্যাশবোর্ডে শুধুমাত্র ইউজার যেগুলোর পেমেন্ট অ্যাডমিন থেকে অ্যাপ্রুভ পেয়েছে বা যেগুলো ফ্রি, সেগুলোই দেখাবে -->
             <div id="cat-premium" class="course-grid">
                 <p style="color: #6b7280; text-align: center; grid-column: 1/-1;">Loading your enrolled items...</p>
             </div>
@@ -297,18 +297,19 @@
             }
         });
 
-        // শুধুমাত্র ফ্রি কন্টেন্ট অথবা অ্যাডমিন অ্যাপ্রুভ করা পারচেজকৃত কন্টেন্ট লোড করার লজিক
+        // কঠোর ফিল্টারিং লজিক: শুধুমাত্র অ্যাপ্রুভ করা বা ফ্রি কোর্সগুলো ড্যাশবোর্ডে দেখাবে
         async function loadDashboardContents(userEmail) {
             const grid = document.getElementById('cat-premium');
             try {
-                // ১. ইউজারের অ্যাপ্রুভড অর্ডারগুলো ফেচ করা
+                // ১. ইউজারের শুধুমাত্র 'Approved' অর্ডারগুলোর কোর্সের নাম সংগ্রহ করা
                 const ordersSnapshot = await getDocs(query(collection(db, "orders"), where("email", "==", userEmail), where("status", "==", "Approved")));
                 const approvedCourseNames = [];
                 ordersSnapshot.forEach(ordDoc => {
-                    approvedCourseNames.push(ordDoc.data().courseName.trim().toLowerCase());
+                    const cName = ordDoc.data().courseName;
+                    if(cName) approvedCourseNames.push(cName.trim().toLowerCase());
                 });
 
-                // ২. সমস্তভান্ডার থেকে কন্টেন্ট ফেচ করা
+                // ২. সমস্ত কন্টেন্ট ফেচ করা
                 const querySnapshot = await getDocs(collection(db, "contents"));
                 grid.innerHTML = '';
                 let count = 0;
@@ -319,7 +320,7 @@
                         const courseTitle = data.title ? data.title.trim().toLowerCase() : '';
                         const contentType = data.type ? data.type.toLowerCase() : '';
                         
-                        // চেক করা হচ্ছে কন্টেন্টটি ফ্রি কিনা অথবা ইউজার এটি পারচেজ করে অ্যাপ্রুভ পেয়েছে কিনা
+                        // কন্ডিশন: কন্টেন্টটি ফ্রি কিনা অথবা ইউজার সেটির জন্য অ্যাপ্রুভড অর্ডার করেছে কিনা
                         const isFree = contentType.includes('free');
                         const isApprovedPurchased = approvedCourseNames.includes(courseTitle);
 
@@ -425,70 +426,20 @@
             }
         }
 
-        async function loadDashboardContents(userEmail) {
-    const grid = document.getElementById('cat-premium');
-    try {
-        // ১. ইউজারের শুধুমাত্র 'Approved' অর্ডারগুলোর কোর্সের নাম সংগ্রহ করা
-        const ordersSnapshot = await getDocs(query(collection(db, "orders"), where("email", "==", userEmail), where("status", "==", "Approved")));
-        const approvedCourseNames = [];
-        ordersSnapshot.forEach(ordDoc => {
-            const cName = ordDoc.data().courseName;
-            if(cName) approvedCourseNames.push(cName.trim().toLowerCase());
-        });
-
-        // ২. সমস্ত কন্টেন্ট ফেচ করা
-        const querySnapshot = await getDocs(collection(db, "contents"));
-        grid.innerHTML = '';
-        let count = 0;
-
-        querySnapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            if(data.status === 'active') {
-                const courseTitle = data.title ? data.title.trim().toLowerCase() : '';
-                const contentType = data.type ? data.type.toLowerCase() : '';
-                
-                // শর্ত: কন্টেন্টটি যদি সত্যি সত্যিই ফ্রি হয় (type এ free থাকে) অথবা ইউজার যদি কিনে অ্যাপ্রুভ পেয়ে থাকে
-                const isExplicitlyFree = contentType === 'free' || contentType === 'free_course' || contentType === 'free_pdf';
-                const isApprovedPurchased = approvedCourseNames.includes(courseTitle);
-
-                if(isExplicitlyFree || isApprovedPurchased) {
-                    count++;
-                    const isPdf = contentType.includes('pdf');
-                    const btnText = isPdf ? '📥 Download PDF Book' : '▶ Start Learning';
-                    const btnClass = isPdf ? 'btn-action btn-pdf' : 'btn-action';
-                    
-                    const accessTarget = data.accessLink || data.pdfLink || '#';
-                    
-                    let actionHTML = '';
-                    if(isPdf) {
-                        actionHTML = `<a href="${accessTarget}" target="_blank" class="${btnClass}">${btnText}</a>`;
-                    } else {
-                        const ytUrlOrId = data.accessLink || 'jNQXAC9IVRw';
-                        actionHTML = `<button class="${btnClass}" onclick="openDynamicPlayer('${data.title}', '${ytUrlOrId}')">${btnText}</button>`;
-                    }
-
-                    grid.innerHTML += `
-                        <div class="course-item">
-                            <img src="${data.thumbnail || 'https://via.placeholder.com/300x170'}" class="course-thumbnail">
-                            <div class="course-info">
-                                <h4>${data.title}</h4>
-                                <p>${data.description || 'No description provided.'}</p>
-                                ${actionHTML}
-                            </div>
-                        </div>
-                    `;
-                }
-            }
-        });
-
-        if(count === 0) {
-            grid.innerHTML = '<p style="color: #6b7280; text-align: center; grid-column: 1/-1;">আপনার ড্যাশবোর্ডে কোনো এনরোল করা বা ফ্রি কোর্স নেই।</p>';
+        async function fetchBillingHistory(email) {
+            const tbody = document.getElementById('billingTableBody');
+            try {
+                const snapshot = await getDocs(query(collection(db, "orders"), where("email", "==", email)));
+                tbody.innerHTML = '';
+                if(snapshot.empty) return tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: #6b7280;">No transaction history found.</td></tr>';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    let statusColor = data.status === 'Approved' ? '#059669' : '#d97706'; 
+                    let statusBg = data.status === 'Approved' ? '#d1fae5' : '#fef3c7';
+                    tbody.innerHTML += `<tr><td data-label="Course/Book" style="font-weight: 500;">${data.courseName}</td><td data-label="Amount" style="font-weight: 600;">৳${data.amount}</td><td data-label="TrxID & Method"><span style="text-transform: uppercase; font-size: 12px; color: #6b7280; display: block;">${data.paymentMethod}</span>${data.trxId}</td><td data-label="Status"><span style="background: ${statusBg}; color: ${statusColor}; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">${data.status}</span></td></tr>`;
+                });
+            } catch(e) { tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: #dc2626;">Failed to load data.</td></tr>'; }
         }
-    } catch (error) {
-        console.error("Dashboard Load Error:", error);
-        grid.innerHTML = '<p style="color: #ef4444; text-align: center; grid-column: 1/-1;">Failed to load contents.</p>';
-    }
-}
 
         window.switchTab = function(tab) {
             document.getElementById('myProfileSection').style.display = 'none';
