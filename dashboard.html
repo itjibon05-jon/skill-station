@@ -98,10 +98,8 @@
             .playlist-container { max-height: 350px; }
         }
 
-        /* Initial View Settings */
         #myProfileSection, #settingsSection, #billingSection { display: none; }
 
-        /* --- Sidebar Hide/Collapse Arrow --- */
         .sidebar-toggle-arrow { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0; padding: 14px 24px; background: transparent; color: #9ca3af; border-top: 1px solid #374151; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; user-select: none; }
         .sidebar-toggle-arrow:hover { background: #1f2937; color: white; }
         .sidebar-toggle-arrow .arrow-icon { transition: transform 0.3s; font-size: 15px; }
@@ -147,7 +145,7 @@
         <div class="sidebar-header">SKILL STATION</div>
         <nav class="nav-menu">
             <a class="nav-link" href="index.html" style="color: #ff5722; font-weight: 600;">🌐 Back to Website</a>
-            <a class="nav-link" id="navCourses" onclick="switchTab('courses')">📚 My Courses & Books</a>
+            <a class="nav-link" id="navCourses" onclick="switchTab('courses')">📚 My Enrolled Courses & Books</a>
             <a class="nav-link active" id="navProfile" onclick="switchTab('profile')">👤 My Profile</a>
             <a class="nav-link" id="navBilling" onclick="switchTab('billing')">💳 Billing History</a>
             <a class="nav-link" id="navSettings" onclick="switchTab('settings')">⚙️ Profile Settings</a>
@@ -246,9 +244,9 @@
                 <button class="course-tab-btn active" id="btn-premium">👑 My Enrolled Courses & Books</button>
             </div>
 
-            <!-- ড্যাশবোর্ডের কোর্স ও পিডিএফ লিস্ট এখানে রেন্ডার হবে -->
+            <!-- শুধুমাত্র ফ্রি অথবা পারচেজকৃত/অ্যাপ্রুভড কন্টেন্টগুলো এখানে আসবে -->
             <div id="cat-premium" class="course-grid">
-                <p style="color: #6b7280; text-align: center; grid-column: 1/-1;">Loading your items...</p>
+                <p style="color: #6b7280; text-align: center; grid-column: 1/-1;">Loading your enrolled items...</p>
             </div>
         </div>
 
@@ -299,77 +297,92 @@
             }
         });
 
-        // ইউজারের পারচেজ করা বা একটিভ কন্টেন্টগুলো ড্যাশবোর্ডে দেখানোর লজিক
+        // শুধুমাত্র ফ্রি কন্টেন্ট অথবা অ্যাডমিন অ্যাপ্রুভ করা পারচেজকৃত কন্টেন্ট লোড করার লজিক
         async function loadDashboardContents(userEmail) {
             const grid = document.getElementById('cat-premium');
             try {
-                // ইউজারের অ্যাপ্রুভড অর্ডারগুলো ফেচ করা
+                // ১. ইউজারের অ্যাপ্রুভড অর্ডারগুলো ফেচ করা
                 const ordersSnapshot = await getDocs(query(collection(db, "orders"), where("email", "==", userEmail), where("status", "==", "Approved")));
                 const approvedCourseNames = [];
                 ordersSnapshot.forEach(ordDoc => {
-                    approvedCourseNames.push(ordDoc.data().courseName);
+                    approvedCourseNames.push(ordDoc.data().courseName.trim().toLowerCase());
                 });
 
-                // সমস্ত কন্টেন্ট ফেচ করা
+                // ২. সমস্তভান্ডার থেকে কন্টেন্ট ফেচ করা
                 const querySnapshot = await getDocs(collection(db, "contents"));
                 grid.innerHTML = '';
                 let count = 0;
 
                 querySnapshot.forEach((docSnap) => {
                     const data = docSnap.data();
-                    // যদি কন্টেন্ট ফ্রি হয় অথবা ইউজার সেটি পারচেজ করে থাকে (অথবা টেস্টের জন্য সব active দেখাতে চাইলে)
                     if(data.status === 'active') {
-                        count++;
-                        const isPdf = data.type && data.type.includes('pdf');
-                        const btnText = isPdf ? '📥 Download PDF Book' : '▶ Start Learning';
-                        const btnClass = isPdf ? 'btn-action btn-pdf' : 'btn-action';
+                        const courseTitle = data.title ? data.title.trim().toLowerCase() : '';
+                        const contentType = data.type ? data.type.toLowerCase() : '';
                         
-                        // যদি পিডিএফ হয় তবে সরাসরি লিংকে নিয়ে যাবে, আর ভিডিও হলে প্লেয়ার ওপেন হবে
-                        const accessTarget = data.accessLink || data.pdfLink || '#';
-                        
-                        let actionHTML = '';
-                        if(isPdf) {
-                            actionHTML = `<a href="${accessTarget}" target="_blank" class="${btnClass}">${btnText}</a>`;
-                        } else {
-                            const ytId = data.accessLink || 'jNQXAC9IVRw';
-                            actionHTML = `<button class="${btnClass}" onclick="openDynamicPlayer('${data.title}', '${ytId}')">${btnText}</button>`;
-                        }
+                        // চেক করা হচ্ছে কন্টেন্টটি ফ্রি কিনা অথবা ইউজার এটি পারচেজ করে অ্যাপ্রুভ পেয়েছে কিনা
+                        const isFree = contentType.includes('free');
+                        const isApprovedPurchased = approvedCourseNames.includes(courseTitle);
 
-                        grid.innerHTML += `
-                            <div class="course-item">
-                                <img src="${data.thumbnail || 'https://via.placeholder.com/300x170'}" class="course-thumbnail">
-                                <div class="course-info">
-                                    <h4>${data.title}</h4>
-                                    <p>${data.description || 'No description provided.'}</p>
-                                    ${actionHTML}
+                        if(isFree || isApprovedPurchased) {
+                            count++;
+                            const isPdf = contentType.includes('pdf');
+                            const btnText = isPdf ? '📥 Download PDF Book' : '▶ Start Learning';
+                            const btnClass = isPdf ? 'btn-action btn-pdf' : 'btn-action';
+                            
+                            const accessTarget = data.accessLink || data.pdfLink || '#';
+                            
+                            let actionHTML = '';
+                            if(isPdf) {
+                                actionHTML = `<a href="${accessTarget}" target="_blank" class="${btnClass}">${btnText}</a>`;
+                            } else {
+                                const ytUrlOrId = data.accessLink || 'jNQXAC9IVRw';
+                                actionHTML = `<button class="${btnClass}" onclick="openDynamicPlayer('${data.title}', '${ytUrlOrId}')">${btnText}</button>`;
+                            }
+
+                            grid.innerHTML += `
+                                <div class="course-item">
+                                    <img src="${data.thumbnail || 'https://via.placeholder.com/300x170'}" class="course-thumbnail">
+                                    <div class="course-info">
+                                        <h4>${data.title}</h4>
+                                        <p>${data.description || 'No description provided.'}</p>
+                                        ${actionHTML}
+                                    </div>
                                 </div>
-                            </div>
-                        `;
+                            `;
+                        }
                     }
                 });
 
                 if(count === 0) {
-                    grid.innerHTML = '<p style="color: #6b7280; text-align: center; grid-column: 1/-1;">No unlocked courses or books found.</p>';
+                    grid.innerHTML = '<p style="color: #6b7280; text-align: center; grid-column: 1/-1;">আপনার ড্যাশবোর্ডে কোনো এনরোল করা বা ফ্রি কোর্স নেই। মূল ওয়েবসাইট থেকে কোর্স এনরোল করুন।</p>';
                 }
             } catch (error) {
+                console.error("Dashboard Load Error:", error);
                 grid.innerHTML = '<p style="color: #ef4444; text-align: center; grid-column: 1/-1;">Failed to load contents.</p>';
             }
         }
 
-        window.openDynamicPlayer = function(courseTitle, youtubeId) {
+        window.openDynamicPlayer = function(courseTitle, youtubeUrlOrId) {
             document.querySelector('.header').style.display = 'none';
             document.getElementById('coursesSection').style.display = 'none';
             document.getElementById('mainSidebar').style.display = 'none'; 
             document.getElementById('playerSection').style.display = 'block';
             document.getElementById('courseTitleHeader').innerText = courseTitle;
             
+            let videoId = youtubeUrlOrId;
+            if (youtubeUrlOrId.includes('youtu.be/')) {
+                videoId = youtubeUrlOrId.split('youtu.be/')[1].split('?')[0];
+            } else if (youtubeUrlOrId.includes('watch?v=')) {
+                videoId = youtubeUrlOrId.split('watch?v=')[1].split('&')[0];
+            }
+
             const playlistDiv = document.getElementById('playlistItems');
             playlistDiv.innerHTML = `
                 <div class="playlist-item active">
                     <span class="play-icon">▶</span> Main Course Video
                 </div>
             `; 
-            document.getElementById('videoIframe').src = `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0`;
+            document.getElementById('videoIframe').src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
         }
 
         window.closePlayer = function() {
