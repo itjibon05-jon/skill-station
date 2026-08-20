@@ -27,6 +27,8 @@
         .btn:hover { background: #ff5722; }
         .toggle-text { text-align: center; margin-top: 25px; font-size: 14px; color: #6b7280; font-weight: 500; }
         .toggle-text span { color: #ff5722; font-weight: 600; cursor: pointer; }
+        .back-to-home { display: block; text-align: center; margin-top: 20px; font-size: 14px; color: #ff5722; font-weight: 600; text-decoration: none; transition: 0.2s; }
+        .back-to-home:hover { text-decoration: underline; }
         .alert { font-size: 13px; padding: 10px 15px; border-radius: 8px; margin-bottom: 20px; display: none; font-weight: 500; text-align: center; }
         .alert-error { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
         .alert-success { background: #d1fae5; color: #059669; border: 1px solid #a7f3d0; }
@@ -39,7 +41,7 @@
     <div class="wrapper">
         <div class="brand-side">
             <h1>SKILL STATION</h1>
-            <p>প্রফেশনাল হওয়ার একমাত্র ঠিকানা। আপনার ক্যারিয়ার গড়ে তুলতে আজই আমাদের সাথে যুক্ত হোন।</p>
+            <p>প্রফেশনাল হওয়ার একমাত্র ঠিকানা। আপনার ক্যারিয়ার গড়ে তুলতে আজই আমাদের সাথে যুক্ত হোন।</p>
         </div>
 
         <div class="form-side">
@@ -67,6 +69,7 @@
                     <button type="submit" class="btn" id="loginBtn">Sign In</button>
                 </form>
                 <div class="toggle-text">Don't have an account? <span onclick="showForm('signupFormBox')">Sign up</span></div>
+                <a href="index.html" class="back-to-home">← Back to Website</a>
             </div>
 
             <!-- 2. SIGNUP FORM -->
@@ -94,6 +97,7 @@
                     <button type="submit" class="btn" id="signupBtn">Create Account</button>
                 </form>
                 <div class="toggle-text">Already have an account? <span onclick="showForm('loginFormBox')">Sign in</span></div>
+                <a href="index.html" class="back-to-home">← Back to Website</a>
             </div>
 
             <!-- 3. FORGOT PASSWORD FORM -->
@@ -113,13 +117,14 @@
                     <button type="submit" class="btn" id="forgotBtn">Send Reset Link</button>
                 </form>
                 <div class="toggle-text"><span onclick="showForm('loginFormBox')">← Back to Sign in</span></div>
+                <a href="index.html" class="back-to-home">← Back to Website</a>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -135,7 +140,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const ADMIN_EMAIL = "it.jibon05@gmail.com"; // আপডেট করা অ্যাডমিন ইমেল
+        const ADMIN_EMAIL = "it.jibon05@gmail.com";
 
         window.togglePasswordVisibility = function(fieldId, iconElement) {
             const passwordField = document.getElementById(fieldId);
