@@ -252,7 +252,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-       let allContents = [...demoContents];
+       let allContents = [];
         async function loadCourses() {
             const courseGrid = document.getElementById('courseGrid');
             try {
