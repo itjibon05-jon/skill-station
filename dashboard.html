@@ -74,7 +74,7 @@
         .course-info { padding: 20px; }
         .course-info h4 { font-size: 16px; color: #111827; margin-bottom: 8px; }
         .course-info p { font-size: 13px; color: #6b7280; margin-bottom: 15px; }
-        .btn-action { background: #10b981; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; font-size: 14px; transition: 0.2s; }
+        .btn-action { background: #10b981; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; font-size: 14px; transition: 0.2s; text-align: center; text-decoration: none; display: block; }
         .btn-action:hover { background: #059669; }
         .btn-pdf { background: #ef4444; }
         .btn-pdf:hover { background: #dc2626; }
@@ -240,15 +240,15 @@
             </div>
         </div>
 
-        <!-- 4. Courses & Books Section (Firebase Dynamic Real Data) -->
+        <!-- 4. Courses & Books Section -->
         <div id="coursesSection">
             <div class="course-tabs">
-                <button class="course-tab-btn active" id="btn-premium" onclick="showCourseCategory('premium')">👑 All Courses & Books</button>
+                <button class="course-tab-btn active" id="btn-premium">👑 My Enrolled Courses & Books</button>
             </div>
 
-            <!-- Firebase থেকে আসা রিয়েল কোর্স ও বইগুলো এখানে অটো শো করবে -->
+            <!-- ড্যাশবোর্ডের কোর্স ও পিডিএফ লিস্ট এখানে রেন্ডার হবে -->
             <div id="cat-premium" class="course-grid">
-                <p style="color: #6b7280; text-align: center; grid-column: 1/-1;">Loading your courses...</p>
+                <p style="color: #6b7280; text-align: center; grid-column: 1/-1;">Loading your items...</p>
             </div>
         </div>
 
@@ -292,32 +292,56 @@
                 currentUser = user;
                 await fetchUserData(user.uid);
                 await fetchBillingHistory(user.email);
-                await loadDashboardCourses();
+                await loadDashboardContents(user.email);
                 document.getElementById('loader').style.display = 'none';
             } else {
                 window.location.href = "login.html";
             }
         });
 
-        // ফায়ারবেস থেকে রিয়েল কোর্স ও বুক লোড করার ফাংশন
-        async function loadDashboardCourses() {
+        // ইউজারের পারচেজ করা বা একটিভ কন্টেন্টগুলো ড্যাশবোর্ডে দেখানোর লজিক
+        async function loadDashboardContents(userEmail) {
             const grid = document.getElementById('cat-premium');
             try {
+                // ইউজারের অ্যাপ্রুভড অর্ডারগুলো ফেচ করা
+                const ordersSnapshot = await getDocs(query(collection(db, "orders"), where("email", "==", userEmail), where("status", "==", "Approved")));
+                const approvedCourseNames = [];
+                ordersSnapshot.forEach(ordDoc => {
+                    approvedCourseNames.push(ordDoc.data().courseName);
+                });
+
+                // সমস্ত কন্টেন্ট ফেচ করা
                 const querySnapshot = await getDocs(collection(db, "contents"));
                 grid.innerHTML = '';
                 let count = 0;
 
                 querySnapshot.forEach((docSnap) => {
                     const data = docSnap.data();
+                    // যদি কন্টেন্ট ফ্রি হয় অথবা ইউজার সেটি পারচেজ করে থাকে (অথবা টেস্টের জন্য সব active দেখাতে চাইলে)
                     if(data.status === 'active') {
                         count++;
+                        const isPdf = data.type && data.type.includes('pdf');
+                        const btnText = isPdf ? '📥 Download PDF Book' : '▶ Start Learning';
+                        const btnClass = isPdf ? 'btn-action btn-pdf' : 'btn-action';
+                        
+                        // যদি পিডিএফ হয় তবে সরাসরি লিংকে নিয়ে যাবে, আর ভিডিও হলে প্লেয়ার ওপেন হবে
+                        const accessTarget = data.accessLink || data.pdfLink || '#';
+                        
+                        let actionHTML = '';
+                        if(isPdf) {
+                            actionHTML = `<a href="${accessTarget}" target="_blank" class="${btnClass}">${btnText}</a>`;
+                        } else {
+                            const ytId = data.accessLink || 'jNQXAC9IVRw';
+                            actionHTML = `<button class="${btnClass}" onclick="openDynamicPlayer('${data.title}', '${ytId}')">${btnText}</button>`;
+                        }
+
                         grid.innerHTML += `
                             <div class="course-item">
                                 <img src="${data.thumbnail || 'https://via.placeholder.com/300x170'}" class="course-thumbnail">
                                 <div class="course-info">
                                     <h4>${data.title}</h4>
                                     <p>${data.description || 'No description provided.'}</p>
-                                    <button class="btn-action" onclick="alert('আপনার ক্লাস ও ভিডিও প্লেয়ার শিঘ্রই ওপেন হবে!')">▶ Start Learning</button>
+                                    ${actionHTML}
                                 </div>
                             </div>
                         `;
@@ -325,16 +349,35 @@
                 });
 
                 if(count === 0) {
-                    grid.innerHTML = '<p style="color: #6b7280; text-align: center; grid-column: 1/-1;">No active courses found.</p>';
+                    grid.innerHTML = '<p style="color: #6b7280; text-align: center; grid-column: 1/-1;">No unlocked courses or books found.</p>';
                 }
             } catch (error) {
                 grid.innerHTML = '<p style="color: #ef4444; text-align: center; grid-column: 1/-1;">Failed to load contents.</p>';
             }
         }
 
-        window.showCourseCategory = function(cat) {
-            document.querySelectorAll('.course-tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('btn-premium').classList.add('active');
+        window.openDynamicPlayer = function(courseTitle, youtubeId) {
+            document.querySelector('.header').style.display = 'none';
+            document.getElementById('coursesSection').style.display = 'none';
+            document.getElementById('mainSidebar').style.display = 'none'; 
+            document.getElementById('playerSection').style.display = 'block';
+            document.getElementById('courseTitleHeader').innerText = courseTitle;
+            
+            const playlistDiv = document.getElementById('playlistItems');
+            playlistDiv.innerHTML = `
+                <div class="playlist-item active">
+                    <span class="play-icon">▶</span> Main Course Video
+                </div>
+            `; 
+            document.getElementById('videoIframe').src = `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0`;
+        }
+
+        window.closePlayer = function() {
+            document.getElementById('videoIframe').src = ""; 
+            document.getElementById('playerSection').style.display = 'none';
+            document.getElementById('mainSidebar').style.display = 'flex';
+            document.querySelector('.header').style.display = 'flex';
+            document.getElementById('coursesSection').style.display = 'block';
         }
 
         function calculateCompletion(data) {
