@@ -14,7 +14,7 @@
         #loader { position: fixed; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 20px; font-weight: bold; color: #ff5722; }
 
         /* Sidebar */
-        .sidebar { width: 260px; background: #111827; color: white; display: flex; flex-direction: column; transition: 0.3s; }
+        .sidebar { width: 260px; background: #111827; color: white; display: flex; flex-direction: column; transition: 0.3s; position: relative; }
         .sidebar-header { padding: 24px; font-size: 20px; font-weight: 700; color: #ff5722; text-align: center; border-bottom: 1px solid #374151; }
         .nav-menu { padding: 20px 0; flex: 1; }
         .nav-link { display: block; padding: 15px 24px; color: #9ca3af; text-decoration: none; font-weight: 500; border-left: 4px solid transparent; cursor: pointer; transition: 0.2s; }
@@ -107,44 +107,33 @@
         .sidebar-toggle-arrow .arrow-icon { transition: transform 0.3s; font-size: 15px; }
         .sidebar.collapsed .sidebar-toggle-arrow .arrow-icon { transform: rotate(180deg); }
 
-        .sidebar { position: relative; }
         .sidebar.collapsed { margin-left: -260px; }
 
-        /* Floating button to bring the sidebar back once hidden */
         .sidebar-reopen-btn { display: none; position: fixed; top: 16px; left: 16px; z-index: 1001; width: 42px; height: 42px; border-radius: 50%; background: #111827; color: #ff5722; border: none; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
         .sidebar-reopen-btn.show { display: flex; }
 
-        /* Overlay for mobile when sidebar is open */
         .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 998; }
         .sidebar-overlay.show { display: block; }
 
-        /* --- Mobile Responsive Layout --- */
         @media (max-width: 768px) {
             body { overflow: visible; height: auto; min-height: 100vh; }
-
             .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 240px; z-index: 999; transform: translateX(0); box-shadow: 4px 0 20px rgba(0,0,0,0.25); }
             .sidebar.collapsed { transform: translateX(-100%); margin-left: 0; }
-
             .main-content { width: 100%; padding: 20px 16px 30px; }
-
             .header { flex-wrap: wrap; gap: 10px; padding-left: 46px; }
             .header h2 { font-size: 19px; }
-
             .card { max-width: 100%; padding: 20px; }
             .info-grid { grid-template-columns: 1fr; }
             .avatar-upload { flex-wrap: wrap; }
-
             .course-grid { grid-template-columns: 1fr; }
             .course-tabs { gap: 6px; }
             .course-tab-btn { font-size: 12px; padding: 8px 10px; }
-
             table { display: block; }
             thead { display: none; }
             tbody, tr, td { display: block; width: 100%; }
             tr { border-bottom: 1px solid #e5e7eb; padding: 10px 0; }
             td { border: none; padding: 6px 0; }
             td:before { content: attr(data-label); display: block; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 2px; }
-
             .player-layout { max-width: 100%; }
             #playerSection { padding: 15px; }
         }
@@ -154,25 +143,24 @@
 
     <div id="loader">Checking Security & Access...</div>
 
-   <aside class="sidebar" id="mainSidebar">
-    <div class="sidebar-header">SKILL STATION</div>
-    <nav class="nav-menu">
-        <!-- মূল ওয়েবসাইটে যাওয়ার বাটন -->
-        <a class="nav-link" href="index.html" style="color: #ff5722; font-weight: 600;">🌐 Back to Website</a>
-        
-        <a class="nav-link" id="navCourses" onclick="switchTab('courses')">📚 My Courses & Books</a>
-        <a class="nav-link active" id="navProfile" onclick="switchTab('profile')">👤 My Profile</a>
-        <a class="nav-link" id="navBilling" onclick="switchTab('billing')">💳 Billing History</a>
-        <a class="nav-link" id="navSettings" onclick="switchTab('settings')">⚙️ Profile Settings</a>
-    </nav>
-    <div class="sidebar-toggle-arrow" id="sidebarToggleArrow" onclick="toggleSidebar()">
-        <span class="arrow-icon">◀</span> <span id="sidebarToggleLabel">Hide Menu</span>
-    </div>
-    <a class="logout-btn" id="logoutBtn">🚪 Logout</a>
-</aside>
+    <aside class="sidebar" id="mainSidebar">
+        <div class="sidebar-header">SKILL STATION</div>
+        <nav class="nav-menu">
+            <a class="nav-link" href="index.html" style="color: #ff5722; font-weight: 600;">🌐 Back to Website</a>
+            <a class="nav-link" id="navCourses" onclick="switchTab('courses')">📚 My Courses & Books</a>
+            <a class="nav-link active" id="navProfile" onclick="switchTab('profile')">👤 My Profile</a>
+            <a class="nav-link" id="navBilling" onclick="switchTab('billing')">💳 Billing History</a>
+            <a class="nav-link" id="navSettings" onclick="switchTab('settings')">⚙️ Profile Settings</a>
+        </nav>
+        <div class="sidebar-toggle-arrow" id="sidebarToggleArrow" onclick="toggleSidebar()">
+            <span class="arrow-icon">◀</span> <span id="sidebarToggleLabel">Hide Menu</span>
+        </div>
+        <div class="logout-btn" id="logoutBtn">🚪 Logout</div>
+    </aside>
 
-<button class="sidebar-reopen-btn" id="sidebarReopenBtn" onclick="toggleSidebar()">☰</button>
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <button class="sidebar-reopen-btn" id="sidebarReopenBtn" onclick="toggleSidebar()">☰</button>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
     <main class="main-content" id="mainContentArea">
         <div class="header">
             <h2 id="pageTitle">My Profile</h2>
@@ -252,51 +240,15 @@
             </div>
         </div>
 
-        <!-- 4. Courses & Books Section -->
+        <!-- 4. Courses & Books Section (Firebase Dynamic Real Data) -->
         <div id="coursesSection">
             <div class="course-tabs">
-                <button class="course-tab-btn active" id="btn-premium" onclick="showCourseCategory('premium')">👑 Premium Courses</button>
-                <button class="course-tab-btn" id="btn-free" onclick="showCourseCategory('free')">🎁 Free Courses</button>
-                <button class="course-tab-btn" id="btn-pdf-free" onclick="showCourseCategory('pdf-free')">🆓 Free Books (PDF)</button>
-                <button class="course-tab-btn" id="btn-pdf-paid" onclick="showCourseCategory('pdf-paid')">🔒 Premium Books (PDF)</button>
+                <button class="course-tab-btn active" id="btn-premium" onclick="showCourseCategory('premium')">👑 All Courses & Books</button>
             </div>
 
-            <!-- Premium Courses Area -->
+            <!-- Firebase থেকে আসা রিয়েল কোর্স ও বইগুলো এখানে অটো শো করবে -->
             <div id="cat-premium" class="course-grid">
-                <div class="course-item" style="border: 1px dashed #d1d5db; box-shadow: none; text-align: center; padding: 40px 20px; grid-column: 1 / -1;">
-                    <h4 style="color: #6b7280; font-size: 15px;">Your unlocked Premium Courses will appear here.</h4>
-                </div>
-            </div>
-
-            <!-- Free Courses Area -->
-            <div id="cat-free" class="course-grid" style="display: none;">
-                <div class="course-item">
-                    <img src="https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=500&q=80" class="course-thumbnail">
-                    <div class="course-info">
-                        <h4>Digital Marketing Foundations</h4>
-                        <p>Learn the basics of SEO, Social Media, and online branding.</p>
-                        <button class="btn-action" onclick="openPlayer('free_course_1')">▶ Start Learning (Free)</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Free PDF Books Area -->
-            <div id="cat-pdf-free" class="course-grid" style="display: none;">
-                <div class="course-item">
-                    <img src="https://images.unsplash.com/photo-1456953180671-730de08edaa7?w=500&q=80" class="course-thumbnail">
-                    <div class="course-info">
-                        <h4>Success Blueprint (Free Sample)</h4>
-                        <p>A quick overview guide to scaling your online career.</p>
-                        <button class="btn-action btn-pdf" onclick="window.open('https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', '_blank')">📥 Download Free PDF</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Premium PDF Books Area -->
-            <div id="cat-pdf-paid" class="course-grid" style="display: none;">
-                <div class="course-item" style="border: 1px dashed #d1d5db; box-shadow: none; text-align: center; padding: 40px 20px; grid-column: 1 / -1;">
-                    <h4 style="color: #6b7280; font-size: 15px;">🔒 Your unlocked Premium PDF Books will appear here.</h4>
-                </div>
+                <p style="color: #6b7280; text-align: center; grid-column: 1/-1;">Loading your courses...</p>
             </div>
         </div>
 
@@ -309,16 +261,13 @@
                 </div>
                 <div class="playlist-container">
                     <div class="playlist-header" id="courseTitleHeader">Course Modules</div>
-                    <div class="playlist-items" id="playlistItems">
-                        <!-- জাভাস্ক্রিপ্ট দিয়ে এখানে ভিডিও লিস্ট আসবে -->
-                    </div>
+                    <div class="playlist-items" id="playlistItems"></div>
                 </div>
             </div>
         </div>
-
     </main>
 
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDKs & Dashboard Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
@@ -343,78 +292,55 @@
                 currentUser = user;
                 await fetchUserData(user.uid);
                 await fetchBillingHistory(user.email);
+                await loadDashboardCourses();
                 document.getElementById('loader').style.display = 'none';
-                switchTab('profile'); 
             } else {
                 window.location.href = "login.html";
             }
         });
 
-        // --- Video Player Logic ---
-        const courseDatabase = {
-            'free_course_1': {
-                title: 'Digital Marketing Foundations',
-                videos: [
-                    { title: 'Module 1: Introduction to Marketing', youtubeId: 'jNQXAC9IVRw' },
-                    { title: 'Module 2: Social Media Algorithms', youtubeId: 'dQw4w9WgXcQ' },
-                    { title: 'Module 3: Creating a Sales Funnel', youtubeId: 'tPEE9ZwTmy0' }
-                ]
-            }
-        };
+        // ফায়ারবেস থেকে রিয়েল কোর্স ও বুক লোড করার ফাংশন
+        async function loadDashboardCourses() {
+            const grid = document.getElementById('cat-premium');
+            try {
+                const querySnapshot = await getDocs(collection(db, "contents"));
+                grid.innerHTML = '';
+                let count = 0;
 
-        window.openPlayer = function(courseId) {
-            const course = courseDatabase[courseId];
-            if(!course) return alert("Course content not found!");
-            document.querySelector('.header').style.display = 'none';
-            document.getElementById('coursesSection').style.display = 'none';
-            document.getElementById('mainSidebar').style.display = 'none'; 
-            document.getElementById('playerSection').style.display = 'block';
-            document.getElementById('courseTitleHeader').innerText = course.title;
-            
-            const playlistDiv = document.getElementById('playlistItems');
-            playlistDiv.innerHTML = ''; 
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    if(data.status === 'active') {
+                        count++;
+                        grid.innerHTML += `
+                            <div class="course-item">
+                                <img src="${data.thumbnail || 'https://via.placeholder.com/300x170'}" class="course-thumbnail">
+                                <div class="course-info">
+                                    <h4>${data.title}</h4>
+                                    <p>${data.description || 'No description provided.'}</p>
+                                    <button class="btn-action" onclick="alert('আপনার ক্লাস ও ভিডিও প্লেয়ার শিঘ্রই ওপেন হবে!')">▶ Start Learning</button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
 
-            course.videos.forEach((vid, index) => {
-                const item = document.createElement('div');
-                item.className = `playlist-item ${index === 0 ? 'active' : ''}`;
-                item.innerHTML = `<span class="play-icon">▶</span> ${vid.title}`;
-                item.onclick = () => {
-                    document.querySelectorAll('.playlist-item').forEach(el => el.classList.remove('active'));
-                    item.classList.add('active');
-                    document.getElementById('videoIframe').src = `https://www.youtube.com/embed/${vid.youtubeId}?autoplay=1&rel=0`;
-                };
-                playlistDiv.appendChild(item);
-            });
-
-            if(course.videos.length > 0) {
-                document.getElementById('videoIframe').src = `https://www.youtube.com/embed/${course.videos[0].youtubeId}?rel=0`;
+                if(count === 0) {
+                    grid.innerHTML = '<p style="color: #6b7280; text-align: center; grid-column: 1/-1;">No active courses found.</p>';
+                }
+            } catch (error) {
+                grid.innerHTML = '<p style="color: #ef4444; text-align: center; grid-column: 1/-1;">Failed to load contents.</p>';
             }
         }
 
-        window.closePlayer = function() {
-            document.getElementById('videoIframe').src = ""; 
-            document.getElementById('playerSection').style.display = 'none';
-            document.getElementById('mainSidebar').style.display = 'flex';
-            document.querySelector('.header').style.display = 'flex';
-            document.getElementById('coursesSection').style.display = 'block';
-        }
-
-        // --- Course Category Tab Logic ---
         window.showCourseCategory = function(cat) {
-            ['premium', 'free', 'pdf-free', 'pdf-paid'].forEach(c => {
-                document.getElementById('cat-' + c).style.display = 'none';
-            });
             document.querySelectorAll('.course-tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('cat-' + cat).style.display = 'grid';
-            document.getElementById('btn-' + cat).classList.add('active');
+            document.getElementById('btn-premium').classList.add('active');
         }
 
         function calculateCompletion(data) {
             let fields = ['name', 'username', 'photoURL', 'mobile', 'whatsapp'];
             let filled = 0; 
-            fields.forEach(f => { 
-                if(data[f] && typeof data[f] === 'string' && data[f].trim() !== '') filled++; 
-            });
+            fields.forEach(f => { if(data[f] && typeof data[f] === 'string' && data[f].trim() !== '') filled++; });
             return Math.round((filled / fields.length) * 100);
         }
 
@@ -451,13 +377,13 @@
                 if(snapshot.empty) return tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: #6b7280;">No transaction history found.</td></tr>';
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    let statusColor = data.status === 'Approved' ? '#059669' : '#d97706'; let statusBg = data.status === 'Approved' ? '#d1fae5' : '#fef3c7';
+                    let statusColor = data.status === 'Approved' ? '#059669' : '#d97706'; 
+                    let statusBg = data.status === 'Approved' ? '#d1fae5' : '#fef3c7';
                     tbody.innerHTML += `<tr><td data-label="Course/Book" style="font-weight: 500;">${data.courseName}</td><td data-label="Amount" style="font-weight: 600;">৳${data.amount}</td><td data-label="TrxID & Method"><span style="text-transform: uppercase; font-size: 12px; color: #6b7280; display: block;">${data.paymentMethod}</span>${data.trxId}</td><td data-label="Status"><span style="background: ${statusBg}; color: ${statusColor}; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">${data.status}</span></td></tr>`;
                 });
             } catch(e) { tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: #dc2626;">Failed to load data.</td></tr>'; }
         }
 
-        // --- FIXED TAB SWITCHING LOGIC ---
         window.switchTab = function(tab) {
             document.getElementById('myProfileSection').style.display = 'none';
             document.getElementById('settingsSection').style.display = 'none';
@@ -478,11 +404,9 @@
             if (tab === 'courses') document.getElementById('navCourses').classList.add('active');
             if (tab === 'billing') document.getElementById('navBilling').classList.add('active');
 
-            // মোবাইলে কোনো মেনুতে ক্লিক করলে সাইডবার অটো হাইড হয়ে যাবে
             if (window.innerWidth <= 768) collapseSidebar();
         }
 
-        // --- SIDEBAR SHOW/HIDE LOGIC ---
         const sidebarEl = document.getElementById('mainSidebar');
         const reopenBtn = document.getElementById('sidebarReopenBtn');
         const overlayEl = document.getElementById('sidebarOverlay');
@@ -502,19 +426,12 @@
         }
 
         window.toggleSidebar = function() {
-            if (sidebarEl.classList.contains('collapsed')) {
-                expandSidebar();
-            } else {
-                collapseSidebar();
-            }
+            if (sidebarEl.classList.contains('collapsed')) expandSidebar();
+            else collapseSidebar();
         }
 
-        // মোবাইলে পেজ লোড হলে ডিফল্টভাবে সাইডবার হাইড থাকবে
         window.addEventListener('DOMContentLoaded', () => {
             if (window.innerWidth <= 768) collapseSidebar();
-        });
-        window.addEventListener('resize', () => {
-            if (window.innerWidth > 768) overlayEl.classList.remove('show');
         });
 
         const compressImage = (file) => {
