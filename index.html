@@ -139,8 +139,8 @@
 
     <!-- Hero Section with Banner.png -->
     <header class="hero">
-        <h1>সঠিক স্কিল আর গাইডলাইন হোক আপনার <span>নেক্সট-লেভেল</span> ক্যারিয়ার!</h1>
-        <p>থিওরিটিক্যাল পড়াশোনা নয় - Skill Station-এর ইন্ডাস্ট্রি-লিডিং প্রোগ্রামগুলোর সাহায্যে অর্জন করুন সেই স্কিল, যা যেকোনো মার্কেট ডোমিনেট করার জন্য যথেষ্ট।</p>
+        <h1>সঠিক স্কিল আর গাইডলাইন হোক আপনার <span>নেক্সট-লেভেল</span> ক্যারিয়ার!</h1>
+        <p>থিওরিটিক্যাল পড়াশোনা নয় - Skill Station-এর ইন্ডাস্ট্রি-লিডিং প্রোগ্রামগুলোর সাহায্যে অর্জন করুন সেই স্কিল, যা যেকোনো মার্কেট ডোমিনেট করার জন্য যথেষ্ট।</p>
         
         <div class="hero-banner">
             <img src="src/banner.png" alt="SKILL STATION Banner">
@@ -160,7 +160,7 @@
     <!-- Courses & Books Section -->
     <div class="container" id="courses">
         <h2 class="section-title">আমাদের সকল প্রোগ্রাম</h2>
-        <p class="section-subtitle">আপনার ক্যারিয়ারকে এক ধাপ এগিয়ে নিতে বেছে নিন আপনার পছন্দের কোর্স বা গাইডলাইন বুক।</p>
+        <p class="section-subtitle">আপনার ক্যারিয়ারকে এক ধাপ এগিয়ে নিতে বেছে নিন আপনার পছন্দের কোর্স বা গাইডলাইন বুক।</p>
         
         <div class="course-tabs">
             <button class="tab-btn active" onclick="filterCourses('all')">All</button>
@@ -236,7 +236,7 @@
         </div>
     </footer>
 
-    <!-- Firebase Script & Dynamic Fetching with Demo Fallback -->
+    <!-- Firebase Script & Dynamic Fetching -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -252,7 +252,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-       let allContents = [];
+        let allContents = [];
+
         async function loadCourses() {
             const courseGrid = document.getElementById('courseGrid');
             try {
@@ -266,13 +267,10 @@
                     }
                 });
 
-                if(firebaseContents.length > 0) {
-                    allContents = [...demoContents, ...firebaseContents];
-                }
-
+                allContents = firebaseContents;
                 renderGrid(allContents);
             } catch (error) {
-                renderGrid(allContents);
+                courseGrid.innerHTML = '<p style="text-align: center; color: #ef4444; grid-column: 1/-1;">Failed to load contents.</p>';
             }
         }
 
@@ -286,43 +284,42 @@
             }
 
             contents.forEach(data => {
-    const regularPrice = data.pricing?.regularPrice || data.regularPrice || 0;
-    const offerPrice = data.pricing?.offerPrice || data.price || 0;
-    
-    const isFree = offerPrice === 0;
-    const buttonText = isFree ? 'Start Free' : 'Enroll Now';
-    const btnColor = isFree ? '#2563eb' : '#10b981';
+                const regularPrice = data.pricing?.regularPrice || data.regularPrice || 0;
+                const offerPrice = data.pricing?.offerPrice || data.price || 0;
+                
+                const isFree = offerPrice === 0;
+                const buttonText = isFree ? 'Start Free' : 'Enroll Now';
+                const btnColor = isFree ? '#2563eb' : '#10b981';
 
-    // প্রাইস দেখানোর ডিজাইন লজিক (অফার থাকলে রেগুলার প্রাইস কেটে দেখাবে)
-    let priceHTML = `<span class="price">৳ ${offerPrice}</span>`;
-    
-    if (regularPrice && regularPrice > offerPrice) {
-        const discountPercent = Math.round(((regularPrice - offerPrice) / regularPrice) * 100);
-        priceHTML = `
-            <div>
-                <span class="price" style="color: #ff5722;">৳ ${offerPrice}</span>
-                <span style="text-decoration: line-through; color: #9ca3af; font-size: 14px; margin-left: 8px;">৳ ${regularPrice}</span>
-                <span style="background: #fee2e2; color: #ef4444; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${discountPercent}% OFF</span>
-            </div>
-        `;
-    }
+                let priceHTML = `<span class="price">৳ ${offerPrice}</span>`;
+                
+                if (regularPrice && regularPrice > offerPrice) {
+                    const discountPercent = Math.round(((regularPrice - offerPrice) / regularPrice) * 100);
+                    priceHTML = `
+                        <div>
+                            <span class="price" style="color: #ff5722;">৳ ${offerPrice}</span>
+                            <span style="text-decoration: line-through; color: #9ca3af; font-size: 14px; margin-left: 8px;">৳ ${regularPrice}</span>
+                            <span style="background: #fee2e2; color: #ef4444; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${discountPercent}% OFF</span>
+                        </div>
+                    `;
+                }
 
-    courseGrid.innerHTML += `
-        <div class="card">
-            <img src="${data.thumbnail || 'https://via.placeholder.com/300x170'}" alt="Thumbnail">
-            <div class="card-body">
-                <div>
-                    <h3>${data.title}</h3>
-                    <p>${data.description || 'No description provided.'}</p>
-                </div>
-                <div class="card-footer">
-                    ${priceHTML}
-                    <a href="checkout.html?course=${encodeURIComponent(data.title)}&price=${offerPrice}" class="btn-enroll" style="background: ${btnColor}">${buttonText}</a>
-                </div>
-            </div>
-        </div>
-    `;
-});
+                courseGrid.innerHTML += `
+                    <div class="card">
+                        <img src="${data.thumbnail || 'https://via.placeholder.com/300x170'}" alt="Thumbnail">
+                        <div class="card-body">
+                            <div>
+                                <h3>${data.title}</h3>
+                                <p>${data.description || 'No description provided.'}</p>
+                            </div>
+                            <div class="card-footer">
+                                ${priceHTML}
+                                <a href="checkout.html?course=${encodeURIComponent(data.title)}&price=${offerPrice}" class="btn-enroll" style="background: ${btnColor}">${buttonText}</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
         }
 
         window.filterCourses = function(type) {
